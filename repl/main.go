@@ -25,20 +25,20 @@ func main() {
 	go startServer()
 
 	shell.Println(`
- _______  _______  _______  ______    _______  _______  __   __  _______ 
+ _______  _______  _______  ______    _______  _______  __   __  _______
 |       ||       ||   _   ||    _ |  |       ||       ||  |_|  ||       |
 |    ___||    ___||  |_|  ||   | ||  |  _____||   _   ||       ||    ___|
-|   |___ |   |___ |       ||   |_||_ | |_____ |  | |  ||       ||   |___ 
+|   |___ |   |___ |       ||   |_||_ | |_____ |  | |  ||       ||   |___
 |    ___||    ___||       ||    __  ||_____  ||  |_|  ||       ||    ___|
-|   |    |   |___ |   _   ||   |  | | _____| ||       || ||_|| ||   |___ 
+|   |    |   |___ |   _   ||   |  | | _____| ||       || ||_|| ||   |___
 |___|    |_______||__| |__||___|  |_||_______||_______||_|   |_||_______|
- _______  ___   __   __  _______                                         
-|       ||   | |  | |  ||       |                                        
-|    ___||   | |  |_|  ||    ___|                                        
-|   |___ |   | |       ||   |___                                         
-|    ___||   | |       ||    ___|                                        
-|   |    |   |  |     | |   |___                                         
-|___|    |___|   |___|  |_______|                                        
+ _______  ___   __   __  _______
+|       ||   | |  | |  ||       |
+|    ___||   | |  |_|  ||    ___|
+|   |___ |   | |       ||   |___
+|    ___||   | |       ||    ___|
+|   |    |   |  |     | |   |___
+|___|    |___|   |___|  |_______|
 `)
 
 	shell.AddCmd(&ishell.Cmd{
@@ -48,8 +48,14 @@ func main() {
 	})
 
 	shell.AddCmd(&ishell.Cmd{
+		Name: "set_filter",
+		Help: "Sets global filters for subsequent commands (ex. os=mac).",
+		Func: cmdDefault,
+	})
+
+	shell.AddCmd(&ishell.Cmd{
 		Name: "client_list",
-		Help: "List active clients with optional filters (ex. os=mac).",
+		Help: "List active clients.",
 		Func: cmdDefault,
 	})
 
@@ -118,10 +124,10 @@ func acceptClient(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			client = ClientIndex.addClient(uid, conn)
 
-			conn.send <- []byte("Welcome new client!")
+			conn.send <- []byte("New Client")
 		}
 
-		client.Connection.send <- []byte("Active.")
+		client.Connection.send <- []byte("Active")
 
 		conn.readCallback = nil
 	}
@@ -151,7 +157,7 @@ func startServer() {
 		}()
 	}
 
-	dur, _ := time.ParseDuration("15s")
+	dur, _ := time.ParseDuration("2s")
 	time.Sleep(dur)
 
 	REPLLog("Starting server and accepting connections...")

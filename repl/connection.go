@@ -96,6 +96,9 @@ type Client struct {
 	ID              int64    `json:"id"`
 	OperatingSystem string   `json:"operating_system"`
 	Bandwidth       string   `json:"bandwidth"`
+	Admin           bool     `json:"admin"`
+	HasCamera       bool     `json:"has_camera"`
+	HasMic          bool     `json:"has_mic"`
 	Tags            []string `json:"tags"`
 	LastConnection  int64    `json:"last_connection"`
 	Connection      *Conn
