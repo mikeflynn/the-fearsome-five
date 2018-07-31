@@ -42,7 +42,7 @@ func main() {
 			_, message, err := c.ReadMessage()
 			if err != nil {
 				debug("Read Error: " + err.Error())
-				return
+				return // Reconnect in 5 mins...
 			}
 			debug(fmt.Sprintf("Incoming: %s\n", message))
 		}
@@ -68,6 +68,10 @@ func main() {
 			return
 		}
 	}
+}
+
+func send(conn *websocket.Conn, message string) error {
+	return conn.WriteMessage(websocket.TextMessage, []byte(message))
 }
 
 func debug(message string) {

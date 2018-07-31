@@ -113,6 +113,10 @@ func (this *Client) isActive() bool {
 	return false
 }
 
+func (this *Client) Send(message string) {
+	this.Connection.send <- []byte(message)
+}
+
 // Connection
 
 type Conn struct {
@@ -167,7 +171,7 @@ func (c *Conn) readPump() {
 		}
 
 		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
-		REPLLog(string(message))
+		REPLLog("Incoming: " + string(message))
 
 		if c.readCallback != nil {
 			c.readCallback(c, string(message))

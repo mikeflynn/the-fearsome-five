@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -42,9 +41,9 @@ func main() {
 `)
 
 	shell.AddCmd(&ishell.Cmd{
-		Name: "greet",
-		Help: "greet user",
-		Func: cmdGreet,
+		Name: "ping",
+		Help: "Sends ping",
+		Func: cmdPing,
 	})
 
 	shell.AddCmd(&ishell.Cmd{
@@ -114,22 +113,25 @@ func acceptClient(w http.ResponseWriter, r *http.Request) {
 	conn := &Conn{send: make(chan []byte, 256), ws: ws}
 	go conn.writePump()
 
+	REPLLog("Client connected!")
+
+	var client *Client
+	var cid int64 = 0
+
+	if r.Header.Get("X-Client-ID") != "" {
+		cid, err = strconv.ParseInt(r.Header.Get("X-Client-ID"), 10, 64)
+	}
+
+	client, err = ClientIndex.getClientByID(cid)
+	if err != nil {
+		client = ClientIndex.addClient(0, conn)
+		client.Send("Welcome, New Client")
+	}
+
 	conn.readCallback = func(conn *Conn, message string) {
-		REPLLog(fmt.Sprintf("Client  Connection: %s\n", message))
+		//client.Connection.send <- []byte("Active")
 
-		parts := strings.Split(string(message), ":")
-
-		uid, err := strconv.ParseInt(parts[0], 10, 64)
-		client, err := ClientIndex.getClientByID(uid)
-		if err != nil {
-			client = ClientIndex.addClient(uid, conn)
-
-			conn.send <- []byte("New Client")
-		}
-
-		client.Connection.send <- []byte("Active")
-
-		conn.readCallback = nil
+		//conn.readCallback = nil
 	}
 
 	conn.readPump()
