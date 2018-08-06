@@ -3,6 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io/ioutil"
+	//"math/rand"
 	"net/url"
 	"os"
 	"os/signal"
@@ -12,6 +14,7 @@ import (
 var server = flag.String("server", "localhost", "Server hostname.")
 var port = flag.String("port", "8080", "Server port.")
 var verbose = flag.Bool("verbose", false, "Additional debuggin logs.")
+var cid = flag.String("cid", "", "Override CID")
 
 var Connection = &Conn{send: make(chan []byte, 256), IsActive: false, IsReading: false, IsWriting: false}
 
@@ -24,20 +27,7 @@ func main() {
 	defer Connection.Close()
 
 	Connection.readCallback = func(conn *Conn, message string) {
-		//client.Connection.send <- []byte("Active")
-
-		params, err := url.ParseQuery(message)
-		if err != nil {
-			Debug("Unable to parse message")
-			return
-		}
-
-		switch mtype := params.Get("type"); mtype {
-		case "init":
-			Debug(fmt.Sprintf("Initialized with new client id: %v", params.Get("client_id")))
-		default:
-			Debug("Unknown message type.")
-		}
+		CommandRouter(message)
 	}
 
 	go func() {
@@ -50,7 +40,7 @@ func main() {
 				}
 			}
 
-			time.Sleep(5 * time.Second)
+			time.Sleep(5 * time.Minute)
 		}
 	}()
 
@@ -71,5 +61,20 @@ func Debug(message string) {
 }
 
 func GetServer() string {
-	return "ws://" + *server + ":" + *port + "/ready"
+	addr := url.URL{
+		Scheme: "ws",
+		Host:   fmt.Sprintf("%s:%s", *server, *port),
+		Path:   "/ready",
+	}
+
+	if *cid != "" {
+		addr.RawQuery = fmt.Sprintf("cid=%s", *cid)
+	} else {
+		data, err := ioutil.ReadFile(GetConfigPath())
+		if err == nil && string(data) != "" {
+			addr.RawQuery = fmt.Sprintf("cid=%s", string(data))
+		}
+	}
+
+	return addr.String()
 }

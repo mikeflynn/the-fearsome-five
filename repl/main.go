@@ -117,22 +117,29 @@ func acceptClient(w http.ResponseWriter, r *http.Request) {
 
 	REPLLog("Client connected!", 0)
 
-	var client *Client
-	var cid int64 = 0
+	var (
+		client *Client
+		cid    int64 = 0
+	)
 
-	if r.Header.Get("X-Client-ID") != "" {
-		cid, err = strconv.ParseInt(r.Header.Get("X-Client-ID"), 10, 64)
+	REPLLog(r.URL.String(), 0)
+
+	if r.URL.Query().Get("cid") != "" {
+		cid, err = strconv.ParseInt(r.URL.Query().Get("cid"), 10, 64)
 	}
 
 	client, err = ClientIndex.getClientByID(cid)
 	if err != nil {
-		client = ClientIndex.addClient(0, conn)
+		client = ClientIndex.addClient(cid, conn)
 		client.Send(fmt.Sprintf("type=init&client_id=%v", client.ID))
+	} else {
+		client.Connection = conn
+		client.Connection.IsActive = true
 	}
 
 	conn.readCallback = func(conn *Conn, message string) {
 		//client.Connection.send <- []byte("Active")
-
+		REPLLog(message, 0)
 	}
 
 	conn.readPump()

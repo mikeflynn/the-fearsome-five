@@ -165,3 +165,7 @@ func (c *Conn) Close() {
 
 	c.IsActive = false
 }
+
+func (c *Conn) Send(message string) {
+	c.send <- []byte(message)
+}

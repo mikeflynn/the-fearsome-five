@@ -85,22 +85,15 @@ func (this *Index) list() []*Client {
 type Client struct {
 	ID              int64    `json:"id"`
 	OperatingSystem string   `json:"operating_system"`
-	Bandwidth       string   `json:"bandwidth"`
-	Admin           bool     `json:"admin"`
-	HasCamera       bool     `json:"has_camera"`
-	HasMic          bool     `json:"has_mic"`
+	Username        string   `json:"username"`
+	Groups          string   `json:"groups"`
 	Tags            []string `json:"tags"`
 	LastConnection  int64    `json:"last_connection"`
 	Connection      *Conn
 }
 
 func (this *Client) isActive() bool {
-	timeout, _ := time.ParseDuration("-5m")
-	if this.LastConnection > time.Now().Add(timeout).Unix() {
-		return true
-	}
-
-	return false
+	return this.Connection.IsActive
 }
 
 func (this *Client) Send(message string) {
