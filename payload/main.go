@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"net/url"
 	"os"
 	"os/signal"
 	"time"
@@ -12,7 +13,7 @@ var server = flag.String("server", "localhost", "Server hostname.")
 var port = flag.String("port", "8080", "Server port.")
 var verbose = flag.Bool("verbose", false, "Additional debuggin logs.")
 
-var Connection = &Conn{send: make(chan []byte, 256), IsActive: false}
+var Connection = &Conn{send: make(chan []byte, 256), IsActive: false, IsReading: false, IsWriting: false}
 
 func main() {
 	flag.Parse()
@@ -20,41 +21,47 @@ func main() {
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
 
-	defer Connection.ws.Close()
+	defer Connection.Close()
 
-	Connection.Establish()
+	Connection.readCallback = func(conn *Conn, message string) {
+		//client.Connection.send <- []byte("Active")
+
+		params, err := url.ParseQuery(message)
+		if err != nil {
+			Debug("Unable to parse message")
+			return
+		}
+
+		switch mtype := params.Get("type"); mtype {
+		case "init":
+			Debug(fmt.Sprintf("Initialized with new client id: %v", params.Get("client_id")))
+		default:
+			Debug("Unknown message type.")
+		}
+	}
 
 	go func() {
 		for {
 			Debug("Checking connection...")
 			if !Connection.IsActive {
-				Connection.Establish()
+				if Connection.Establish() {
+					go Connection.writePump()
+					Connection.readPump()
+				}
 			}
 
-			time.Sleep(5 * time.Minute)
+			time.Sleep(5 * time.Second)
 		}
 	}()
 
-	go Connection.writePump()
-
-	Connection.readCallback = func(conn *Conn, message string) {
-		//client.Connection.send <- []byte("Active")
-
-		//conn.readCallback = nil
+	for {
+		select {
+		case <-interrupt:
+			Debug("INTERRUPT!")
+			Connection.Close()
+			os.Exit(0)
+		}
 	}
-
-	go func() {
-		for {
-			select {
-			case <-interrupt:
-				Debug("INTERRUPT!")
-				Connection.Close()
-				os.Exit(0)
-			}
-		}
-	}()
-
-	Connection.readPump()
 }
 
 func Debug(message string) {

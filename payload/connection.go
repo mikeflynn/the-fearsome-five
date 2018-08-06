@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -25,6 +26,8 @@ type Conn struct {
 	send         chan []byte
 	readCallback func(*Conn, string)
 	IsActive     bool
+	IsReading    bool
+	IsWriting    bool
 }
 
 func (c *Conn) write(mt int, payload []byte) error {
@@ -33,10 +36,16 @@ func (c *Conn) write(mt int, payload []byte) error {
 }
 
 func (c *Conn) writePump() {
+	if c.IsWriting == true {
+		return
+	}
+
+	c.IsWriting = true
+
 	ticker := time.NewTicker(pingPeriod)
 
 	defer func() {
-		c.ws.Close()
+		c.Close()
 		ticker.Stop()
 	}()
 
@@ -66,11 +75,19 @@ func (c *Conn) writePump() {
 			}
 		}
 	}
+
+	c.IsWriting = false
 }
 
 func (c *Conn) readPump() {
+	if c.IsReading == true {
+		return
+	}
+
+	c.IsReading = true
+
 	defer func() {
-		c.ws.Close()
+		c.Close()
 	}()
 
 	c.ws.SetReadLimit(maxMessageSize)
@@ -95,9 +112,11 @@ func (c *Conn) readPump() {
 			c.readCallback(c, string(message))
 		}
 	}
+
+	c.IsReading = false
 }
 
-func (c *Conn) Establish() {
+func (c *Conn) Establish() bool {
 	host := GetServer()
 	Debug("Connecting to " + host + "...")
 
@@ -112,13 +131,28 @@ func (c *Conn) Establish() {
 			Connection.IsActive = false
 			return errors.New(text)
 		})
+
+		return true
 	} else {
 		Debug("Connection Error: " + err.Error())
 	}
+
+	return false
 }
 
 func (c *Conn) Close() {
 	Debug("Closing connection...")
+
+	if c.IsActive {
+		return
+	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			Debug(fmt.Sprintf("Caught panic: %v", r))
+			c.IsActive = false
+		}
+	}()
 
 	err := c.ws.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 	if err != nil {

@@ -127,13 +127,12 @@ func acceptClient(w http.ResponseWriter, r *http.Request) {
 	client, err = ClientIndex.getClientByID(cid)
 	if err != nil {
 		client = ClientIndex.addClient(0, conn)
-		client.Send("Welcome, New Client")
+		client.Send(fmt.Sprintf("type=init&client_id=%v", client.ID))
 	}
 
 	conn.readCallback = func(conn *Conn, message string) {
 		//client.Connection.send <- []byte("Active")
 
-		//conn.readCallback = nil
 	}
 
 	conn.readPump()
