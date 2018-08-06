@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -80,11 +79,12 @@ func (c *Conn) readPump() {
 	for {
 		_, message, err := c.ws.ReadMessage()
 		if err != nil {
-			Debug(fmt.Sprintf("ERROR: %v", err))
-
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) {
 				Debug("UNEXPECTED ERROR: " + err.Error())
+
+				c.Close()
 			}
+
 			break
 		}
 
@@ -109,7 +109,7 @@ func (c *Conn) Establish() {
 
 		c.ws.SetCloseHandler(func(code int, text string) error {
 			Debug("Closing connection...")
-			c.IsActive = false
+			Connection.IsActive = false
 			return errors.New(text)
 		})
 	} else {
@@ -118,6 +118,8 @@ func (c *Conn) Establish() {
 }
 
 func (c *Conn) Close() {
+	Debug("Closing connection...")
+
 	err := c.ws.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 	if err != nil {
 		Debug("Write Close Error: " + err.Error())
@@ -125,7 +127,6 @@ func (c *Conn) Close() {
 
 	if err := c.ws.Close(); err != nil {
 		Debug("Error Closing Connection: " + err.Error())
-		return
 	}
 
 	c.IsActive = false

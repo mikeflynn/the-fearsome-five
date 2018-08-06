@@ -60,20 +60,14 @@ func main() {
 	})
 
 	shell.AddCmd(&ishell.Cmd{
-		Name: "client_list",
+		Name: "list",
 		Help: "List active clients.",
-		Func: cmdDefault,
+		Func: cmdList,
 	})
 
 	shell.AddCmd(&ishell.Cmd{
 		Name: "client_list_sync",
 		Help: "Ping each client and sync the local list with updated data.",
-		Func: cmdDefault,
-	})
-
-	shell.AddCmd(&ishell.Cmd{
-		Name: "client_update",
-		Help: "Updates clients, per filter, with the given update file.",
 		Func: cmdDefault,
 	})
 
@@ -117,7 +111,8 @@ func acceptClient(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	conn := &Conn{send: make(chan []byte, 256), ws: ws}
+	conn := &Conn{send: make(chan []byte, 256), ws: ws, IsActive: true}
+
 	go conn.writePump()
 
 	REPLLog("Client connected!", 0)

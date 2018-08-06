@@ -43,16 +43,18 @@ func main() {
 		//conn.readCallback = nil
 	}
 
-	Connection.readPump()
-
-	for {
-		select {
-		case <-interrupt:
-			Debug("INTERRUPT!")
-			Connection.Close()
-			os.Exit(0)
+	go func() {
+		for {
+			select {
+			case <-interrupt:
+				Debug("INTERRUPT!")
+				Connection.Close()
+				os.Exit(0)
+			}
 		}
-	}
+	}()
+
+	Connection.readPump()
 }
 
 func Debug(message string) {

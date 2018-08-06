@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	//"errors"
 	"fmt"
 	"time"
 
@@ -25,6 +24,7 @@ type Conn struct {
 	ws           *websocket.Conn
 	send         chan []byte
 	readCallback func(*Conn, string)
+	IsActive     bool
 }
 
 func (c *Conn) write(mt int, payload []byte) error {
@@ -81,6 +81,8 @@ func (c *Conn) readPump() {
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) {
 				REPLLog(fmt.Sprintf("ERROR: %v", err), 1)
+
+				c.Close()
 			}
 			break
 		}
@@ -92,4 +94,19 @@ func (c *Conn) readPump() {
 			c.readCallback(c, string(message))
 		}
 	}
+}
+
+func (c *Conn) Close() {
+	REPLLog("Closing connection...", 1)
+
+	err := c.ws.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+	if err != nil {
+		REPLLog("Write Close Error: "+err.Error(), 1)
+	}
+
+	if err := c.ws.Close(); err != nil {
+		REPLLog("Error Closing Connection: "+err.Error(), 1)
+	}
+
+	c.IsActive = false
 }

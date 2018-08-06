@@ -76,6 +76,10 @@ func (this *Index) getClientByID(id int64) (*Client, error) {
 	return &Client{}, errors.New("Client not found.")
 }
 
+func (this *Index) list() []*Client {
+	return this.Clients
+}
+
 // Client
 
 type Client struct {
