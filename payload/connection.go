@@ -2,7 +2,7 @@ package main
 
 import (
 	"bytes"
-	//"errors"
+	"errors"
 	"fmt"
 	"time"
 
@@ -25,6 +25,7 @@ type Conn struct {
 	ws           *websocket.Conn
 	send         chan []byte
 	readCallback func(*Conn, string)
+	IsActive     bool
 }
 
 func (c *Conn) write(mt int, payload []byte) error {
@@ -59,9 +60,9 @@ func (c *Conn) writePump() {
 				return
 			}
 		case <-ticker.C:
-			REPLLog("Sending ping...", 1)
+			Debug("Sending ping...")
 			if err := c.write(websocket.PingMessage, nil); err != nil {
-				REPLLog("PING ERROR: "+err.Error(), 1)
+				Debug("PING ERROR: " + err.Error())
 				return
 			}
 		}
@@ -79,17 +80,53 @@ func (c *Conn) readPump() {
 	for {
 		_, message, err := c.ws.ReadMessage()
 		if err != nil {
+			Debug(fmt.Sprintf("ERROR: %v", err))
+
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) {
-				REPLLog(fmt.Sprintf("ERROR: %v", err), 1)
+				Debug("UNEXPECTED ERROR: " + err.Error())
 			}
 			break
 		}
 
 		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
-		REPLLog("Incoming: "+string(message), 1)
+		Debug("Incoming: " + string(message))
 
 		if c.readCallback != nil {
 			c.readCallback(c, string(message))
 		}
 	}
+}
+
+func (c *Conn) Establish() {
+	host := GetServer()
+	Debug("Connecting to " + host + "...")
+
+	ws, _, err := websocket.DefaultDialer.Dial(host, nil)
+	if err == nil {
+		Debug("Connection established!")
+		c.ws = ws
+		c.IsActive = true
+
+		c.ws.SetCloseHandler(func(code int, text string) error {
+			Debug("Closing connection...")
+			c.IsActive = false
+			return errors.New(text)
+		})
+	} else {
+		Debug("Connection Error: " + err.Error())
+	}
+}
+
+func (c *Conn) Close() {
+	err := c.ws.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+	if err != nil {
+		Debug("Write Close Error: " + err.Error())
+	}
+
+	if err := c.ws.Close(); err != nil {
+		Debug("Error Closing Connection: " + err.Error())
+		return
+	}
+
+	c.IsActive = false
 }

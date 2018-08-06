@@ -13,6 +13,7 @@ import (
 
 var port = flag.String("port", "8080", "Inbound connection port.")
 var database = flag.String("db", "", "File path for persistent JSON file.")
+var verbose = flag.Bool("verbose", false, "Display extra logging.")
 
 var shell = ishell.New()
 
@@ -24,20 +25,26 @@ func main() {
 	go startServer()
 
 	shell.Println(`
- _______  _______  _______  ______    _______  _______  __   __  _______
-|       ||       ||   _   ||    _ |  |       ||       ||  |_|  ||       |
-|    ___||    ___||  |_|  ||   | ||  |  _____||   _   ||       ||    ___|
-|   |___ |   |___ |       ||   |_||_ | |_____ |  | |  ||       ||   |___
-|    ___||    ___||       ||    __  ||_____  ||  |_|  ||       ||    ___|
-|   |    |   |___ |   _   ||   |  | | _____| ||       || ||_|| ||   |___
-|___|    |_______||__| |__||___|  |_||_______||_______||_|   |_||_______|
- _______  ___   __   __  _______
-|       ||   | |  | |  ||       |
-|    ___||   | |  |_|  ||    ___|
-|   |___ |   | |       ||   |___
-|    ___||   | |       ||    ___|
-|   |    |   |  |     | |   |___
-|___|    |___|   |___|  |_______|
+ _________  ___   ___   ______
+/________/\/__/\ /__/\ /_____/\
+\__.::.__\/\::\ \\  \ \\::::_\/_
+   \::\ \   \::\/_\ .\ \\:\/___/\
+    \::\ \   \:: ___::\ \\::___\/_
+     \::\ \   \: \ \\::\ \\:\____/\
+      \__\/    \__\/ \::\/ \_____\/
+ ______   ______   ________   ______    ______   ______   ___ __ __   ______
+/_____/\ /_____/\ /_______/\ /_____/\  /_____/\ /_____/\ /__//_//_/\ /_____/\
+\::::_\/_\::::_\/_\::: _  \ \\:::_ \ \ \::::_\/_\:::_ \ \\::\| \| \ \\::::_\/_
+ \:\/___/\\:\/___/\\::(_)  \ \\:(_) ) )_\:\/___/\\:\ \ \ \\:.      \ \\:\/___/\
+  \:::._\/ \::___\/_\:: __  \ \\: __  \ \\_::._\:\\:\ \ \ \\:.\-/\  \ \\::___\/_
+   \:\ \    \:\____/\\:.\ \  \ \\ \  \ \ \ /____\:\\:\_\ \ \\. \  \  \ \\:\____/\
+ ___\_\/  ___\_____\/_\__\/\__\/_\_\/ \_\/ \_____\/ \_____\/ \__\/ \__\/ \_____\/
+/_____/\ /_______/\/_/\ /_/\ /_____/\
+\::::_\/_\__.::._\/\:\ \\ \ \\::::_\/_
+ \:\/___/\  \::\ \  \:\ \\ \ \\:\/___/\
+  \:::._\/  _\::\ \__\:\_/.:\ \\::___\/_
+   \:\ \   /__\::\__/\\ ..::/ / \:\____/\
+    \_\/   \________\/ \___/_(   \_____\/
 `)
 
 	shell.AddCmd(&ishell.Cmd{
@@ -106,14 +113,14 @@ func main() {
 func acceptClient(w http.ResponseWriter, r *http.Request) {
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		REPLLog(fmt.Sprintf("Connection Issue: %s", err.Error()))
+		REPLLog(fmt.Sprintf("Connection Issue: %s", err.Error()), 1)
 		return
 	}
 
 	conn := &Conn{send: make(chan []byte, 256), ws: ws}
 	go conn.writePump()
 
-	REPLLog("Client connected!")
+	REPLLog("Client connected!", 0)
 
 	var client *Client
 	var cid int64 = 0
@@ -137,8 +144,14 @@ func acceptClient(w http.ResponseWriter, r *http.Request) {
 	conn.readPump()
 }
 
-func REPLLog(message string) {
-	shell.Println("[LOG]: " + message)
+func REPLLog(message string, level int) {
+	if level > 0 {
+		if *verbose {
+			shell.Println("[LOG]: " + message)
+		}
+	} else {
+		shell.Println("[LOG]: " + message)
+	}
 }
 
 func startServer() {
@@ -162,7 +175,7 @@ func startServer() {
 	dur, _ := time.ParseDuration("2s")
 	time.Sleep(dur)
 
-	REPLLog("Starting server and accepting connections...")
+	REPLLog("Starting server and accepting connections...", 0)
 
 	http.HandleFunc("/ready", acceptClient)
 	http.ListenAndServe("localhost:"+*port, nil)

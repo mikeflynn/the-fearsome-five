@@ -1,23 +1,18 @@
 package main
 
 import (
-	//"bytes"
 	"flag"
 	"fmt"
 	"os"
 	"os/signal"
-	//"strings"
 	"time"
-
-	"github.com/gorilla/websocket"
 )
 
 var server = flag.String("server", "localhost", "Server hostname.")
 var port = flag.String("port", "8080", "Server port.")
 var verbose = flag.Bool("verbose", false, "Additional debuggin logs.")
 
-var CmdChan = make(chan string)
-var Connection *websocket.Conn
+var Connection = &Conn{send: make(chan []byte, 256), IsActive: false}
 
 func main() {
 	flag.Parse()
@@ -25,69 +20,47 @@ func main() {
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
 
-	connect()
-	defer Connection.Close()
+	defer Connection.ws.Close()
+
+	Connection.Establish()
 
 	go func() {
 		for {
-			_, message, err := Connection.ReadMessage()
-			if err != nil {
-				debug("Read Error: " + err.Error())
-
-				connect()
-				defer Connection.Close()
+			Debug("Checking connection...")
+			if !Connection.IsActive {
+				Connection.Establish()
 			}
-			debug(fmt.Sprintf("Incoming: %s\n", message))
+
+			time.Sleep(5 * time.Minute)
 		}
 	}()
+
+	go Connection.writePump()
+
+	Connection.readCallback = func(conn *Conn, message string) {
+		//client.Connection.send <- []byte("Active")
+
+		//conn.readCallback = nil
+	}
+
+	Connection.readPump()
 
 	for {
 		select {
 		case <-interrupt:
-			debug("INTERRUPT!")
-
-			err := Connection.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
-			if err != nil {
-				debug("Write Close Error: " + err.Error())
-				return
-			}
-
-			return
+			Debug("INTERRUPT!")
+			Connection.Close()
+			os.Exit(0)
 		}
 	}
 }
 
-func send(conn *websocket.Conn, message string) error {
-	return conn.WriteMessage(websocket.TextMessage, []byte(message))
-}
-
-func debug(message string) {
+func Debug(message string) {
 	if *verbose == true {
 		fmt.Println(message)
 	}
 }
 
-func getServer() string {
+func GetServer() string {
 	return "ws://" + *server + ":" + *port + "/ready"
-}
-
-func connect() {
-	host := getServer()
-
-	debug("Conncting to " + host + "...")
-
-	for {
-		c, _, err := websocket.DefaultDialer.Dial(host, nil)
-		if err == nil {
-			debug("Connection established!")
-			Connection = c
-			return
-		}
-
-		if *verbose == true {
-			debug("Connection Error: " + err.Error())
-		}
-
-		time.Sleep(5 * time.Second)
-	}
 }
