@@ -27,14 +27,14 @@ func main() {
 	defer Connection.Close()
 
 	Connection.readCallback = func(conn *Conn, message string) {
-		CommandRouter(message)
+		IncomingRouter(conn, message)
 	}
 
 	go func() {
 		for {
 			Debug("Checking connection...")
 			if !Connection.IsActive {
-				if Connection.Establish() {
+				if Connection.Establish(GetServer()) {
 					go Connection.writePump()
 					Connection.readPump()
 				}

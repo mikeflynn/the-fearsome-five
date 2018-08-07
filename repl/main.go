@@ -137,12 +137,13 @@ func acceptClient(w http.ResponseWriter, r *http.Request) {
 		client.Connection.IsActive = true
 	}
 
-	conn.readCallback = func(conn *Conn, message string) {
+	client.Connection.ParentID = client.ID
+	client.Connection.readCallback = func(conn *Conn, message string) {
 		//client.Connection.send <- []byte("Active")
-		REPLLog(message, 0)
+		IncomingRouter(conn, message)
 	}
 
-	conn.readPump()
+	client.Connection.readPump()
 }
 
 func REPLLog(message string, level int) {

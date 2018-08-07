@@ -8,7 +8,7 @@ import (
 	//"github.com/go-vgo/robotgo"
 )
 
-func CommandRouter(message string) {
+func IncomingRouter(conn *Conn, message string) {
 	params, err := url.ParseQuery(message)
 	if err != nil {
 		Debug("Unable to parse message")

@@ -28,6 +28,7 @@ type Conn struct {
 	IsActive     bool
 	IsReading    bool
 	IsWriting    bool
+	ParentID     int64
 }
 
 func (c *Conn) write(mt int, payload []byte) error {
@@ -116,8 +117,7 @@ func (c *Conn) readPump() {
 	c.IsReading = false
 }
 
-func (c *Conn) Establish() bool {
-	host := GetServer()
+func (c *Conn) Establish(host string) bool {
 	Debug("Connecting to " + host + "...")
 
 	ws, _, err := websocket.DefaultDialer.Dial(host, nil)
@@ -128,7 +128,7 @@ func (c *Conn) Establish() bool {
 
 		c.ws.SetCloseHandler(func(code int, text string) error {
 			Debug("Closing connection...")
-			Connection.IsActive = false
+			c.IsActive = false
 			return errors.New(text)
 		})
 

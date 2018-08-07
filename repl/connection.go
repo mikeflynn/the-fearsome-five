@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"time"
 
@@ -25,6 +26,9 @@ type Conn struct {
 	send         chan []byte
 	readCallback func(*Conn, string)
 	IsActive     bool
+	IsReading    bool
+	IsWriting    bool
+	ParentID     int64
 }
 
 func (c *Conn) write(mt int, payload []byte) error {
@@ -33,6 +37,12 @@ func (c *Conn) write(mt int, payload []byte) error {
 }
 
 func (c *Conn) writePump() {
+	if c.IsWriting == true {
+		return
+	}
+
+	c.IsWriting = true
+
 	ticker := time.NewTicker(pingPeriod)
 
 	defer func() {
@@ -66,9 +76,17 @@ func (c *Conn) writePump() {
 			}
 		}
 	}
+
+	c.IsWriting = false
 }
 
 func (c *Conn) readPump() {
+	if c.IsReading == true {
+		return
+	}
+
+	c.IsReading = true
+
 	defer func() {
 		c.ws.Close()
 	}()
@@ -84,6 +102,7 @@ func (c *Conn) readPump() {
 
 				c.Close()
 			}
+
 			break
 		}
 
@@ -94,10 +113,46 @@ func (c *Conn) readPump() {
 			c.readCallback(c, string(message))
 		}
 	}
+
+	c.IsReading = false
+}
+
+func (c *Conn) Establish(host string) bool {
+	REPLLog("Connecting to "+host+"...", 1)
+
+	ws, _, err := websocket.DefaultDialer.Dial(host, nil)
+	if err == nil {
+		REPLLog("Connection established!", 1)
+		c.ws = ws
+		c.IsActive = true
+
+		c.ws.SetCloseHandler(func(code int, text string) error {
+			REPLLog("Closing connection...", 1)
+			c.IsActive = false
+			return errors.New(text)
+		})
+
+		return true
+	} else {
+		REPLLog("Connection Error: "+err.Error(), 1)
+	}
+
+	return false
 }
 
 func (c *Conn) Close() {
 	REPLLog("Closing connection...", 1)
+
+	if c.IsActive {
+		return
+	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			REPLLog(fmt.Sprintf("Caught panic: %v", r), 1)
+			c.IsActive = false
+		}
+	}()
 
 	err := c.ws.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 	if err != nil {
@@ -109,4 +164,8 @@ func (c *Conn) Close() {
 	}
 
 	c.IsActive = false
+}
+
+func (c *Conn) Send(message string) {
+	c.send <- []byte(message)
 }

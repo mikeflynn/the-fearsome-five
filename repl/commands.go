@@ -22,9 +22,9 @@ func cmdList(sh *ishell.Context) {
 	for _, c := range ClientIndex.list() {
 		message = message + fmt.Sprintf(`
 ====================================
-Client: %v
-Active: %v
-`, c.ID, c.Connection.IsActive)
+Client: %v        Active: %v
+OS: %s            User: %s
+`, c.ID, c.Connection.IsActive, c.OperatingSystem, c.Username)
 	}
 
 	sh.Println(message)
