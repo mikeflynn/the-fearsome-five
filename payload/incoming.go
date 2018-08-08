@@ -11,7 +11,7 @@ import (
 func IncomingRouter(conn *Conn, message string) {
 	params, err := url.ParseQuery(message)
 	if err != nil {
-		Debug("Unable to parse message")
+		Debug("Unable to parse message", 0)
 		return
 	}
 
@@ -19,19 +19,19 @@ func IncomingRouter(conn *Conn, message string) {
 	case "init":
 		cmdInit(params)
 	default:
-		Debug("Unknown message type.")
+		Debug("Unknown message type.", 0)
 		Connection.Send("PONG")
 	}
 }
 
 func cmdInit(params url.Values) {
-	Debug(fmt.Sprintf("Initialized with new client id: %v", params.Get("client_id")))
+	Debug(fmt.Sprintf("Initialized with new client id: %v", params.Get("client_id")), 0)
 
 	if params.Get("client_id") != "" {
 		fileData := []byte(params.Get("client_id"))
 		err := ioutil.WriteFile(GetConfigPath(), fileData, 0600)
 		if err != nil {
-			Debug("Failed to write config file.")
+			Debug("Failed to write config file.", 0)
 		}
 
 		cmdProfile()
@@ -53,7 +53,7 @@ func cmdProfile() {
 
 	profile.Set("os", runtime.GOOS)
 
-	Debug(profile.Encode())
+	Debug(profile.Encode(), 0)
 
 	Connection.Send(profile.Encode())
 }

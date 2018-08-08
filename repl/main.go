@@ -22,6 +22,9 @@ var upgrader = websocket.Upgrader{}
 func main() {
 	flag.Parse()
 
+	// Set the logger on the connection namespace.
+	logger = REPLLog
+
 	go startServer()
 
 	shell.Println(`

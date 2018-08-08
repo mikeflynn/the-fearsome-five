@@ -21,6 +21,9 @@ var Connection = &Conn{send: make(chan []byte, 256), IsActive: false, IsReading:
 func main() {
 	flag.Parse()
 
+	// Set the logger on the connection namespace.
+	logger = Debug
+
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
 
@@ -32,7 +35,7 @@ func main() {
 
 	go func() {
 		for {
-			Debug("Checking connection...")
+			Debug("Checking connection...", 0)
 			if !Connection.IsActive {
 				if Connection.Establish(GetServer()) {
 					go Connection.writePump()
@@ -47,14 +50,14 @@ func main() {
 	for {
 		select {
 		case <-interrupt:
-			Debug("INTERRUPT!")
+			Debug("INTERRUPT!", 0)
 			Connection.Close()
 			os.Exit(0)
 		}
 	}
 }
 
-func Debug(message string) {
+func Debug(message string, level int) {
 	if *verbose == true {
 		fmt.Println(message)
 	}

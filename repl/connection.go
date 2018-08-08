@@ -19,6 +19,7 @@ const (
 var (
 	newline = []byte{'\n'}
 	space   = []byte{' '}
+	logger  func(string, int)
 )
 
 type Conn struct {
@@ -46,7 +47,7 @@ func (c *Conn) writePump() {
 	ticker := time.NewTicker(pingPeriod)
 
 	defer func() {
-		c.ws.Close()
+		c.Close()
 		ticker.Stop()
 	}()
 
@@ -69,9 +70,9 @@ func (c *Conn) writePump() {
 				return
 			}
 		case <-ticker.C:
-			REPLLog("Sending ping...", 1)
+			logger("Sending ping...", 1)
 			if err := c.write(websocket.PingMessage, nil); err != nil {
-				REPLLog("PING ERROR: "+err.Error(), 1)
+				logger("PING ERROR: "+err.Error(), 1)
 				return
 			}
 		}
@@ -88,7 +89,7 @@ func (c *Conn) readPump() {
 	c.IsReading = true
 
 	defer func() {
-		c.ws.Close()
+		c.Close()
 	}()
 
 	c.ws.SetReadLimit(maxMessageSize)
@@ -98,7 +99,7 @@ func (c *Conn) readPump() {
 		_, message, err := c.ws.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) {
-				REPLLog(fmt.Sprintf("ERROR: %v", err), 1)
+				logger("UNEXPECTED ERROR: "+err.Error(), 1)
 
 				c.Close()
 			}
@@ -107,7 +108,7 @@ func (c *Conn) readPump() {
 		}
 
 		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
-		REPLLog("Incoming: "+string(message), 1)
+		logger("Incoming: "+string(message), 1)
 
 		if c.readCallback != nil {
 			c.readCallback(c, string(message))
@@ -118,30 +119,30 @@ func (c *Conn) readPump() {
 }
 
 func (c *Conn) Establish(host string) bool {
-	REPLLog("Connecting to "+host+"...", 1)
+	logger("Connecting to "+host+"...", 1)
 
 	ws, _, err := websocket.DefaultDialer.Dial(host, nil)
 	if err == nil {
-		REPLLog("Connection established!", 1)
+		logger("Connection established!", 1)
 		c.ws = ws
 		c.IsActive = true
 
 		c.ws.SetCloseHandler(func(code int, text string) error {
-			REPLLog("Closing connection...", 1)
+			logger("Closing connection...", 1)
 			c.IsActive = false
 			return errors.New(text)
 		})
 
 		return true
 	} else {
-		REPLLog("Connection Error: "+err.Error(), 1)
+		logger("Connection Error: "+err.Error(), 1)
 	}
 
 	return false
 }
 
 func (c *Conn) Close() {
-	REPLLog("Closing connection...", 1)
+	logger("Closing connection...", 1)
 
 	if c.IsActive {
 		return
@@ -149,18 +150,18 @@ func (c *Conn) Close() {
 
 	defer func() {
 		if r := recover(); r != nil {
-			REPLLog(fmt.Sprintf("Caught panic: %v", r), 1)
+			logger(fmt.Sprintf("Caught panic: %v", r), 1)
 			c.IsActive = false
 		}
 	}()
 
 	err := c.ws.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 	if err != nil {
-		REPLLog("Write Close Error: "+err.Error(), 1)
+		logger("Write Close Error: "+err.Error(), 1)
 	}
 
 	if err := c.ws.Close(); err != nil {
-		REPLLog("Error Closing Connection: "+err.Error(), 1)
+		logger("Error Closing Connection: "+err.Error(), 1)
 	}
 
 	c.IsActive = false

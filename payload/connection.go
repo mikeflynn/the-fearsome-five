@@ -19,6 +19,7 @@ const (
 var (
 	newline = []byte{'\n'}
 	space   = []byte{' '}
+	logger  func(string, int)
 )
 
 type Conn struct {
@@ -69,9 +70,9 @@ func (c *Conn) writePump() {
 				return
 			}
 		case <-ticker.C:
-			Debug("Sending ping...")
+			logger("Sending ping...", 1)
 			if err := c.write(websocket.PingMessage, nil); err != nil {
-				Debug("PING ERROR: " + err.Error())
+				logger("PING ERROR: "+err.Error(), 1)
 				return
 			}
 		}
@@ -98,7 +99,7 @@ func (c *Conn) readPump() {
 		_, message, err := c.ws.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) {
-				Debug("UNEXPECTED ERROR: " + err.Error())
+				logger("UNEXPECTED ERROR: "+err.Error(), 1)
 
 				c.Close()
 			}
@@ -107,7 +108,7 @@ func (c *Conn) readPump() {
 		}
 
 		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
-		Debug("Incoming: " + string(message))
+		logger("Incoming: "+string(message), 1)
 
 		if c.readCallback != nil {
 			c.readCallback(c, string(message))
@@ -118,30 +119,30 @@ func (c *Conn) readPump() {
 }
 
 func (c *Conn) Establish(host string) bool {
-	Debug("Connecting to " + host + "...")
+	logger("Connecting to "+host+"...", 1)
 
 	ws, _, err := websocket.DefaultDialer.Dial(host, nil)
 	if err == nil {
-		Debug("Connection established!")
+		logger("Connection established!", 1)
 		c.ws = ws
 		c.IsActive = true
 
 		c.ws.SetCloseHandler(func(code int, text string) error {
-			Debug("Closing connection...")
+			logger("Closing connection...", 1)
 			c.IsActive = false
 			return errors.New(text)
 		})
 
 		return true
 	} else {
-		Debug("Connection Error: " + err.Error())
+		logger("Connection Error: "+err.Error(), 1)
 	}
 
 	return false
 }
 
 func (c *Conn) Close() {
-	Debug("Closing connection...")
+	logger("Closing connection...", 1)
 
 	if c.IsActive {
 		return
@@ -149,18 +150,18 @@ func (c *Conn) Close() {
 
 	defer func() {
 		if r := recover(); r != nil {
-			Debug(fmt.Sprintf("Caught panic: %v", r))
+			logger(fmt.Sprintf("Caught panic: %v", r), 1)
 			c.IsActive = false
 		}
 	}()
 
 	err := c.ws.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 	if err != nil {
-		Debug("Write Close Error: " + err.Error())
+		logger("Write Close Error: "+err.Error(), 1)
 	}
 
 	if err := c.ws.Close(); err != nil {
-		Debug("Error Closing Connection: " + err.Error())
+		logger("Error Closing Connection: "+err.Error(), 1)
 	}
 
 	c.IsActive = false
