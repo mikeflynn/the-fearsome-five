@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/fatih/color"
 	"gopkg.in/abiosoft/ishell.v2"
 )
 
@@ -18,13 +19,16 @@ func cmdPing(sh *ishell.Context) {
 
 func cmdList(sh *ishell.Context) {
 	message := ""
+	red := color.New(color.FgRed).SprintFunc()
+	green := color.New(color.FgGreen).SprintFunc()
 
 	for _, c := range ClientIndex.list() {
-		message = message + fmt.Sprintf(`
-====================================
-Client: %v        Active: %v
-OS: %s            User: %s
-`, c.ID, c.Connection.IsActive, c.OperatingSystem, c.Username)
+		active := red("✖︎")
+		if c.Connection.IsActive == true {
+			active = green("✔︎")
+		}
+
+		message = message + fmt.Sprintf("%v [%v] %s @ %s\n", c.ID, active, c.Username, c.OperatingSystem)
 	}
 
 	sh.Println(message)
