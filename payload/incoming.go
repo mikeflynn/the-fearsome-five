@@ -51,9 +51,11 @@ func cmdProfile() {
 		profile.Set("groups", groups)
 	}
 
-	profile.Set("os", runtime.GOOS)
+	if ip, err := GetInternalIP(); err == nil {
+		profile.Set("internal_ip", ip)
+	}
 
-	Debug(profile.Encode(), 0)
+	profile.Set("os", runtime.GOOS)
 
 	Connection.Send(profile.Encode())
 }

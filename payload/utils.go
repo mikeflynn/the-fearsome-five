@@ -7,6 +7,7 @@ like getting a username or file path.
 
 import (
 	//"os"
+	"net"
 	"os/user"
 	"strings"
 )
@@ -45,4 +46,16 @@ func GetThisUserGroups() (string, error) {
 
 func GetConfigPath() string {
 	return "/tmp/dll-73471"
+}
+
+func GetInternalIP() (string, error) {
+	conn, err := net.Dial("udp", "8.8.8.8:80")
+	if err != nil {
+		return "", err
+	}
+
+	defer conn.Close()
+
+	localAddr := conn.LocalAddr().(*net.UDPAddr)
+	return localAddr.IP.String(), nil
 }

@@ -39,4 +39,5 @@ func incomingProfile(client *Client, params url.Values) {
 	client.Groups = params.Get("groups")
 	client.Username = params.Get("user")
 	client.OperatingSystem = params.Get("os")
+	client.InternalIP = params.Get("internal_ip")
 }

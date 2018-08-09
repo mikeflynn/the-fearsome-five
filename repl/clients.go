@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"math"
 	"math/rand"
+	"net/url"
 	"time"
 )
 
@@ -80,12 +81,30 @@ func (this *Index) list() []*Client {
 	return this.Clients
 }
 
+func (this *Index) filter(query string) ([]*Client, error) {
+	params, err := url.ParseQuery(query)
+	if err != nil {
+		return []*Client{}, error
+	}
+
+	var ret []*Client
+
+	for _, client := range this.Clients {
+		if _, ok := params[client]; ok {
+			ret = append(ret, client)
+		}
+	}
+
+}
+
 // Client
 
 type Client struct {
 	ID              int64    `json:"id"`
 	OperatingSystem string   `json:"operating_system"`
 	Username        string   `json:"username"`
+	InternalIP      string   `json:"internal_ip"`
+	ExternalIP      string   `json:"external_ip"`
 	Groups          string   `json:"groups"`
 	Tags            []string `json:"tags"`
 	LastConnection  int64    `json:"last_connection"`
