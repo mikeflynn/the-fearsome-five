@@ -19,3 +19,10 @@ Written in golang.
 * Lists active payloads and can filter the list by OS, current activity level, or bandwidth.
 * Can connect to a single host for direct shell/powershell access.
 * Can be compiled for Linux or macOS.
+
+## TODO
+
+1. JSON query / filter
+2. Add firewall avoidance on payload.
+3. Add "hibernation" mode (with command queue) in addition to the websocket connection.
+4. Client P2P?
