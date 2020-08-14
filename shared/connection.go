@@ -70,9 +70,9 @@ func (c *Conn) WritePump() {
 				return
 			}
 		case <-ticker.C:
-			Logger("Sending ping...", 1)
+			Logger("Sending ping...")
 			if err := c.Write(websocket.PingMessage, nil); err != nil {
-				Logger("PING ERROR: "+err.Error(), 1)
+				Logger("PING ERROR: " + err.Error())
 				return
 			}
 		}
@@ -99,7 +99,7 @@ func (c *Conn) ReadPump() {
 		_, message, err := c.Ws.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) {
-				Logger(fmt.Sprintf("ERROR: %v", err), 1)
+				Logger(fmt.Sprintf("ERROR: %v", err))
 
 				c.Close()
 			}
@@ -108,7 +108,7 @@ func (c *Conn) ReadPump() {
 		}
 
 		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
-		Logger("Incoming: "+string(message), 1)
+		Logger("Incoming: " + string(message))
 
 		if c.ReadCallback != nil {
 			c.ReadCallback(c, string(message))
@@ -119,30 +119,30 @@ func (c *Conn) ReadPump() {
 }
 
 func (c *Conn) Establish(host string) bool {
-	Logger("Connecting to "+host+"...", 1)
+	Logger("Connecting to " + host + "...")
 
 	ws, _, err := websocket.DefaultDialer.Dial(host, nil)
 	if err == nil {
-		Logger("Connection established!", 1)
+		Logger("Connection established!")
 		c.Ws = ws
 		c.IsActive = true
 
 		c.Ws.SetCloseHandler(func(code int, text string) error {
-			Logger("Closing connection...", 1)
+			Logger("Closing connection...")
 			c.IsActive = false
 			return errors.New(text)
 		})
 
 		return true
 	} else {
-		Logger("Connection Error: "+err.Error(), 1)
+		Logger("Connection Error: " + err.Error())
 	}
 
 	return false
 }
 
 func (c *Conn) Close() {
-	Logger("Closing connection...", 1)
+	Logger("Closing connection...")
 
 	if c.IsActive {
 		return
@@ -150,18 +150,18 @@ func (c *Conn) Close() {
 
 	defer func() {
 		if r := recover(); r != nil {
-			Logger(fmt.Sprintf("Caught panic: %v", r), 1)
+			Logger(fmt.Sprintf("Caught panic: %v", r))
 			c.IsActive = false
 		}
 	}()
 
 	err := c.Ws.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 	if err != nil {
-		Logger("Write Close Error: "+err.Error(), 1)
+		Logger("Write Close Error: " + err.Error())
 	}
 
 	if err := c.Ws.Close(); err != nil {
-		Logger("Error Closing Connection: "+err.Error(), 1)
+		Logger("Error Closing Connection: " + err.Error())
 	}
 
 	c.IsActive = false
