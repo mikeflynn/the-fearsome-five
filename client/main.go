@@ -35,7 +35,7 @@ func main() {
 
 	go func() {
 		for {
-			Debug("Checking connection...", 0)
+			Debug("Checking connection...")
 			if !Connection.IsActive {
 				if Connection.Establish(GetServer(*server)) {
 					go Connection.WritePump()
@@ -50,14 +50,14 @@ func main() {
 	for {
 		select {
 		case <-interrupt:
-			Debug("INTERRUPT!", 0)
+			Debug("INTERRUPT!")
 			Connection.Close()
 			os.Exit(0)
 		}
 	}
 }
 
-func Debug(message string, level int) {
+func Debug(message string) {
 	if *verbose == true {
 		fmt.Println(message)
 	}

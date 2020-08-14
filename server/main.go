@@ -14,8 +14,14 @@ var Verbose *bool
 
 func main() {
 	clientPort := flag.String("client-port", "8000", "Client connection port.")
-	adminPort := flag.String("admin-port", "9000", "Admin connection port.")
-	Verbose := flag.Bool("verbose", false, "Display extra logging.")
+	//adminPort := flag.String("admin-port", "9000", "Admin connection port.")
+	Verbose = flag.Bool("verbose", false, "Display extra logging.")
+
+	flag.Parse()
+
+	shared.Logger = func(message string) {
+		Logger("LIBRARY", message)
+	}
 
 	startServer(*clientPort)
 }
@@ -31,6 +37,8 @@ func clientRouter(w http.ResponseWriter, r *http.Request) {
 
 	conn := &shared.Conn{SendChan: make(chan []byte, 256), Ws: ws, IsActive: true}
 	go conn.WritePump()
+
+	Logger("SERVER", "Client connected!")
 
 	conn.ReadCallback = func(conn *shared.Conn, message string) {
 		Logger("FROM CLIENT", message)

@@ -19,7 +19,7 @@ const (
 var (
 	newline = []byte{'\n'}
 	space   = []byte{' '}
-	Logger  func(string, int)
+	Logger  func(string)
 )
 
 type Conn struct {
