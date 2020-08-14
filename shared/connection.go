@@ -33,8 +33,8 @@ type Conn struct {
 }
 
 func (c *Conn) Write(mt int, payload []byte) error {
-	c.ws.SetWriteDeadline(time.Now().Add(writeWait))
-	return c.ws.WriteMessage(mt, payload)
+	c.Ws.SetWriteDeadline(time.Now().Add(writeWait))
+	return c.Ws.WriteMessage(mt, payload)
 }
 
 func (c *Conn) WritePump() {
@@ -59,8 +59,8 @@ func (c *Conn) WritePump() {
 				return
 			}
 
-			c.ws.SetWriteDeadline(time.Now().Add(writeWait))
-			w, err := c.ws.NextWriter(websocket.TextMessage)
+			c.Ws.SetWriteDeadline(time.Now().Add(writeWait))
+			w, err := c.Ws.NextWriter(websocket.TextMessage)
 			if err != nil {
 				return
 			}
@@ -92,11 +92,11 @@ func (c *Conn) ReadPump() {
 		c.Close()
 	}()
 
-	c.ws.SetReadLimit(maxMessageSize)
-	c.ws.SetReadDeadline(time.Now().Add(pongWait))
-	c.ws.SetPongHandler(func(string) error { c.ws.SetReadDeadline(time.Now().Add(pongWait)); return nil })
+	c.Ws.SetReadLimit(maxMessageSize)
+	c.Ws.SetReadDeadline(time.Now().Add(pongWait))
+	c.Ws.SetPongHandler(func(string) error { c.Ws.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	for {
-		_, message, err := c.ws.ReadMessage()
+		_, message, err := c.Ws.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) {
 				Logger(fmt.Sprintf("ERROR: %v", err), 1)
@@ -124,10 +124,10 @@ func (c *Conn) Establish(host string) bool {
 	ws, _, err := websocket.DefaultDialer.Dial(host, nil)
 	if err == nil {
 		Logger("Connection established!", 1)
-		c.ws = ws
+		c.Ws = ws
 		c.IsActive = true
 
-		c.ws.SetCloseHandler(func(code int, text string) error {
+		c.Ws.SetCloseHandler(func(code int, text string) error {
 			Logger("Closing connection...", 1)
 			c.IsActive = false
 			return errors.New(text)
@@ -155,12 +155,12 @@ func (c *Conn) Close() {
 		}
 	}()
 
-	err := c.ws.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+	err := c.Ws.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 	if err != nil {
 		Logger("Write Close Error: "+err.Error(), 1)
 	}
 
-	if err := c.ws.Close(); err != nil {
+	if err := c.Ws.Close(); err != nil {
 		Logger("Error Closing Connection: "+err.Error(), 1)
 	}
 
