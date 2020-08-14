@@ -23,7 +23,7 @@ var (
 )
 
 type Conn struct {
-	ws           *websocket.Conn
+	Ws           *websocket.Conn
 	SendChan     chan []byte
 	ReadCallback func(*Conn, string)
 	IsActive     bool

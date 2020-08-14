@@ -16,8 +16,8 @@ var Connection = &shared.Conn{SendChan: make(chan []byte, 256), IsActive: false,
 var verbose *bool
 
 func main() {
-	server := flag.String("server", "localhost", "Server hostname.")
-	verboseFlag := flag.Bool("verbose", false, "Additional debuggin logs.")
+	server := flag.String("server", "localhost:8000", "Server hostname.")
+	verboseFlag := flag.Bool("verbose", false, "Additional debugging logs.")
 
 	flag.Parse()
 
@@ -43,7 +43,7 @@ func main() {
 				}
 			}
 
-			time.Sleep(5 * time.Minute)
+			time.Sleep(30 * time.Second)
 		}
 	}()
 
