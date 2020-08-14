@@ -24,20 +24,20 @@ var (
 
 type Conn struct {
 	ws           *websocket.Conn
-	send         chan []byte
-	readCallback func(*Conn, string)
+	SendChan     chan []byte
+	ReadCallback func(*Conn, string)
 	IsActive     bool
 	IsReading    bool
 	IsWriting    bool
 	ParentID     int64
 }
 
-func (c *Conn) write(mt int, payload []byte) error {
+func (c *Conn) Write(mt int, payload []byte) error {
 	c.ws.SetWriteDeadline(time.Now().Add(writeWait))
 	return c.ws.WriteMessage(mt, payload)
 }
 
-func (c *Conn) writePump() {
+func (c *Conn) WritePump() {
 	if c.IsWriting == true {
 		return
 	}
@@ -53,9 +53,9 @@ func (c *Conn) writePump() {
 
 	for {
 		select {
-		case message, ok := <-c.send:
+		case message, ok := <-c.SendChan:
 			if !ok {
-				c.write(websocket.CloseMessage, []byte{})
+				c.Write(websocket.CloseMessage, []byte{})
 				return
 			}
 
@@ -71,7 +71,7 @@ func (c *Conn) writePump() {
 			}
 		case <-ticker.C:
 			Logger("Sending ping...", 1)
-			if err := c.write(websocket.PingMessage, nil); err != nil {
+			if err := c.Write(websocket.PingMessage, nil); err != nil {
 				Logger("PING ERROR: "+err.Error(), 1)
 				return
 			}
@@ -81,7 +81,7 @@ func (c *Conn) writePump() {
 	c.IsWriting = false
 }
 
-func (c *Conn) readPump() {
+func (c *Conn) ReadPump() {
 	if c.IsReading == true {
 		return
 	}
@@ -110,8 +110,8 @@ func (c *Conn) readPump() {
 		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
 		Logger("Incoming: "+string(message), 1)
 
-		if c.readCallback != nil {
-			c.readCallback(c, string(message))
+		if c.ReadCallback != nil {
+			c.ReadCallback(c, string(message))
 		}
 	}
 
@@ -168,5 +168,5 @@ func (c *Conn) Close() {
 }
 
 func (c *Conn) Send(message string) {
-	c.send <- []byte(message)
+	c.SendChan <- []byte(message)
 }
