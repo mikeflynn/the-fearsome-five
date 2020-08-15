@@ -113,7 +113,7 @@ func (c *Conn) Establish(host string) bool {
 	ws, _, err := websocket.DefaultDialer.Dial(host, nil)
 	if err == nil {
 		Logger("Connection established!")
-		c.Ws = ws
+		c.SetWS(ws)
 
 		c.Ws.SetCloseHandler(func(code int, text string) error {
 			Logger("Closing connection...")
@@ -126,6 +126,11 @@ func (c *Conn) Establish(host string) bool {
 	}
 
 	return false
+}
+
+func (c *Conn) SetWS(ws *websocket.Conn) {
+	c.Ws = ws
+	c.State = 0
 }
 
 func (c *Conn) Close() {
