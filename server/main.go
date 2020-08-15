@@ -12,8 +12,47 @@ import (
 
 var Verbose *bool
 
+func adminRouter(w http.ResponseWriter, r *http.Request) {
+	http.Error(w, "Not found", http.StatusNotFound)
+	return
+}
+
+func clientRouter(idx *Index, w http.ResponseWriter, r *http.Request) {
+	upgrader := websocket.Upgrader{
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
+	}
+	ws, err := upgrader.Upgrade(w, r, nil)
+
+	if err != nil {
+		Logger("SERVER", fmt.Sprintf("Connection Issue: %s", err.Error()))
+		return
+	}
+
+	conn := &shared.Conn{Ws: ws, SendChan: make(chan []byte, 256)}
+	idx.register <- conn
+	Logger("SERVER", "Client connected!")
+
+	conn.ReadCallback = func(conn *shared.Conn, message string) {
+		Logger("FROM CLIENT", message)
+	}
+
+	conn.CloseCallback = func(conn *shared.Conn) {
+		idx.unregister <- conn
+	}
+
+	go conn.WritePump()
+	go conn.ReadPump()
+}
+
+func Logger(prefix string, message string) {
+	if *Verbose {
+		log.Println(fmt.Sprintf("%s > %s"), prefix, message)
+	}
+}
+
 func main() {
-	port := flag.String("client-port", "8000", "Client connection port.")
+	addr := flag.String("listen", "0.0.0.0:8000", "API listen address.")
 	Verbose = flag.Bool("verbose", false, "Display extra logging.")
 
 	flag.Parse()
@@ -22,37 +61,16 @@ func main() {
 		Logger("LIBRARY", message)
 	}
 
-	startServer(*clientPort)
-}
+	index := initIndex()
+	go index.start()
 
-func clientRouter(w http.ResponseWriter, r *http.Request) {
-	upgrader := websocket.Upgrader{}
-	ws, err := upgrader.Upgrade(w, r, nil)
+	http.HandleFunc("/a", adminRouter)
+	http.HandleFunc("/c", func(w http.ResponseWriter, r *http.Request) {
+		clientRouter(index, w, r)
+	})
 
+	err := http.ListenAndServe(*addr, nil)
 	if err != nil {
-		Logger("SERVER", fmt.Sprintf("Connection Issue: %s", err.Error()))
-		return
-	}
-
-	conn := &shared.Conn{SendChan: make(chan []byte, 256), Ws: ws, IsActive: true}
-	go conn.WritePump()
-
-	Logger("SERVER", "Client connected!")
-
-	conn.ReadCallback = func(conn *shared.Conn, message string) {
-		Logger("FROM CLIENT", message)
-	}
-
-	conn.ReadPump()
-}
-
-func startServer(port string) {
-	http.HandleFunc("/ready", clientRouter)
-	http.ListenAndServe(fmt.Sprintf("0.0.0.0:%s", port), nil)
-}
-
-func Logger(prefix string, message string) {
-	if *Verbose {
-		log.Println(fmt.Sprintf("%s > %s"), prefix, message)
+		log.Fatal("ListenAndServe: ", err)
 	}
 }

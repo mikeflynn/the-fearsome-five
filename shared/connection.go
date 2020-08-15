@@ -129,6 +129,10 @@ func (c *Conn) Close() {
 		}
 	}()
 
+	if c.CloseCallback != nil {
+		c.CloseCallback(c)
+	}
+
 	err := c.Ws.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 	if err != nil {
 		Logger("Write Close Error: " + err.Error())
@@ -136,10 +140,6 @@ func (c *Conn) Close() {
 
 	if err := c.Ws.Close(); err != nil {
 		Logger("Error Closing Connection: " + err.Error())
-	}
-
-	if c.CloseCallback != nil {
-		c.CloseCallback(c)
 	}
 }
 
