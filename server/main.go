@@ -13,8 +13,7 @@ import (
 var Verbose *bool
 
 func main() {
-	clientPort := flag.String("client-port", "8000", "Client connection port.")
-	//adminPort := flag.String("admin-port", "9000", "Admin connection port.")
+	port := flag.String("client-port", "8000", "Client connection port.")
 	Verbose = flag.Bool("verbose", false, "Display extra logging.")
 
 	flag.Parse()

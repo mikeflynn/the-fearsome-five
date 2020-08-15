@@ -11,13 +11,13 @@ import (
 func IncomingRouter(conn *shared.Conn, message string) {
 	params, err := url.ParseQuery(message)
 	if err != nil {
-		Debug("Unable to parse message", 0)
+		Debug("Unable to parse message")
 		return
 	}
 
 	switch mtype := params.Get("type"); mtype {
 	default:
-		Debug("Unknown message type.", 0)
+		Debug("Unknown message type.")
 		Connection.Send("PONG")
 	}
 }

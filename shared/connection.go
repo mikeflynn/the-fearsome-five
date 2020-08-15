@@ -23,13 +23,10 @@ var (
 )
 
 type Conn struct {
-	Ws           *websocket.Conn
-	SendChan     chan []byte
-	ReadCallback func(*Conn, string)
-	IsActive     bool
-	IsReading    bool
-	IsWriting    bool
-	ParentID     int64
+	Ws            *websocket.Conn
+	SendChan      chan []byte
+	ReadCallback  func(*Conn, string)
+	CloseCallback func(*Conn)
 }
 
 func (c *Conn) Write(mt int, payload []byte) error {
@@ -38,12 +35,6 @@ func (c *Conn) Write(mt int, payload []byte) error {
 }
 
 func (c *Conn) WritePump() {
-	if c.IsWriting == true {
-		return
-	}
-
-	c.IsWriting = true
-
 	ticker := time.NewTicker(pingPeriod)
 
 	defer func() {
@@ -77,17 +68,9 @@ func (c *Conn) WritePump() {
 			}
 		}
 	}
-
-	c.IsWriting = false
 }
 
 func (c *Conn) ReadPump() {
-	if c.IsReading == true {
-		return
-	}
-
-	c.IsReading = true
-
 	defer func() {
 		c.Close()
 	}()
@@ -114,8 +97,6 @@ func (c *Conn) ReadPump() {
 			c.ReadCallback(c, string(message))
 		}
 	}
-
-	c.IsReading = false
 }
 
 func (c *Conn) Establish(host string) bool {
@@ -125,11 +106,9 @@ func (c *Conn) Establish(host string) bool {
 	if err == nil {
 		Logger("Connection established!")
 		c.Ws = ws
-		c.IsActive = true
 
 		c.Ws.SetCloseHandler(func(code int, text string) error {
 			Logger("Closing connection...")
-			c.IsActive = false
 			return errors.New(text)
 		})
 
@@ -144,14 +123,9 @@ func (c *Conn) Establish(host string) bool {
 func (c *Conn) Close() {
 	Logger("Closing connection...")
 
-	if c.IsActive {
-		return
-	}
-
 	defer func() {
 		if r := recover(); r != nil {
 			Logger(fmt.Sprintf("Caught panic: %v", r))
-			c.IsActive = false
 		}
 	}()
 
@@ -164,7 +138,9 @@ func (c *Conn) Close() {
 		Logger("Error Closing Connection: " + err.Error())
 	}
 
-	c.IsActive = false
+	if c.CloseCallback != nil {
+		c.CloseCallback(c)
+	}
 }
 
 func (c *Conn) Send(message string) {
