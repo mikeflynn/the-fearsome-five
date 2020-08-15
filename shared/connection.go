@@ -27,6 +27,14 @@ type Conn struct {
 	SendChan      chan []byte
 	ReadCallback  func(*Conn, string)
 	CloseCallback func(*Conn)
+	State         int // 0 = ready; -1 = closed
+}
+
+func InitConnection() *Conn {
+	return &Conn{
+		SendChan: make(chan []byte, 256),
+		State:    -1,
+	}
 }
 
 func (c *Conn) Write(mt int, payload []byte) error {
@@ -121,6 +129,12 @@ func (c *Conn) Establish(host string) bool {
 }
 
 func (c *Conn) Close() {
+	if c.State == -1 {
+		return
+	}
+
+	c.State = -1
+
 	Logger("Closing connection...")
 
 	defer func() {
