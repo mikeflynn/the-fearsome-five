@@ -2,6 +2,7 @@ package shared
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -22,10 +23,12 @@ var (
 	Logger  func(string)
 )
 
+// Connection
+
 type Conn struct {
 	Ws            *websocket.Conn
 	SendChan      chan []byte
-	ReadCallback  func(*Conn, string)
+	ReadCallback  func(*Conn, *Message)
 	CloseCallback func(*Conn)
 	State         int // 0 = ready; -1 = closed
 }
@@ -102,27 +105,30 @@ func (c *Conn) ReadPump() {
 		Logger("Incoming: " + string(message))
 
 		if c.ReadCallback != nil {
-			c.ReadCallback(c, string(message))
+			c.ReadCallback(c, ReadMessage(message))
 		}
 	}
 }
 
 func (c *Conn) Establish(host string) bool {
-	Logger("Connecting to " + host + "...")
+	if c.State == -1 {
+		Logger("Connecting to " + host + "...")
 
-	ws, _, err := websocket.DefaultDialer.Dial(host, nil)
-	if err == nil {
-		Logger("Connection established!")
-		c.SetWS(ws)
+		ws, _, err := websocket.DefaultDialer.Dial(host, nil)
+		if err == nil {
+			Logger("Connection established!")
+			c.SetWS(ws)
 
-		c.Ws.SetCloseHandler(func(code int, text string) error {
-			Logger("Closing connection...")
-			return errors.New(text)
-		})
+			c.Ws.SetCloseHandler(func(code int, text string) error {
+				Logger("Closing connection...")
+				c.State = -1
+				return errors.New(text)
+			})
 
-		return true
-	} else {
-		Logger("Connection Error: " + err.Error())
+			return true
+		} else {
+			Logger("Connection Error: " + err.Error())
+		}
 	}
 
 	return false
@@ -162,6 +168,34 @@ func (c *Conn) Close() {
 	}
 }
 
-func (c *Conn) Send(message string) {
-	c.SendChan <- []byte(message)
+func (c *Conn) Send(message *Message) {
+	c.SendChan <- []byte(message.Serialize())
+}
+
+// Message
+
+type Message struct {
+	Action  string `json:"action"`
+	Body    string `json:"body"`
+	Context string `json:"context"`
+}
+
+func ReadMessage(jsonStr []byte) *Message {
+	m := &Message{}
+	json.Unmarshal([]byte(jsonStr), m)
+
+	return m
+}
+
+func NewMessage(action string, body string) *Message {
+	return &Message{
+		Action:  action,
+		Body:    body,
+		Context: "",
+	}
+}
+
+func (m *Message) Serialize() []byte {
+	ret, _ := json.Marshal(m)
+	return ret
 }
