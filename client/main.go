@@ -12,7 +12,6 @@ import (
 	"github.com/mikeflynn/the-fearsome-five/shared"
 )
 
-var Connection = &shared.Conn{SendChan: make(chan []byte, 256), IsActive: false, IsReading: false, IsWriting: false}
 var verbose *bool
 
 func main() {
@@ -27,20 +26,20 @@ func main() {
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
 
-	defer Connection.Close()
+	connection := shared.InitConnection()
 
-	Connection.ReadCallback = func(conn *shared.Conn, message string) {
+	defer connection.Close()
+
+	connection.ReadCallback = func(conn *shared.Conn, message string) {
 		IncomingRouter(conn, message)
 	}
 
 	go func() {
 		for {
 			Debug("Checking connection...")
-			if !Connection.IsActive {
-				if Connection.Establish(GetServer(*server)) {
-					go Connection.WritePump()
-					Connection.ReadPump()
-				}
+			if connection.Establish(GetServer(*server)) {
+				go connection.WritePump()
+				connection.ReadPump()
 			}
 
 			time.Sleep(30 * time.Second)
@@ -51,7 +50,7 @@ func main() {
 		select {
 		case <-interrupt:
 			Debug("INTERRUPT!")
-			Connection.Close()
+			connection.Close()
 			os.Exit(0)
 		}
 	}
@@ -67,7 +66,7 @@ func GetServer(server string) string {
 	addr := url.URL{
 		Scheme: "ws",
 		Host:   fmt.Sprintf("%s", server),
-		Path:   "/ready",
+		Path:   "/c",
 	}
 
 	return addr.String()

@@ -29,9 +29,13 @@ func clientRouter(idx *Index, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	conn := &shared.Conn{Ws: ws, SendChan: make(chan []byte, 256)}
+	conn := shared.InitConnection()
+	conn.SetWS(ws) // Since this is the server, set the web socket without Establish()
+
 	idx.register <- conn
+
 	Logger("SERVER", "Client connected!")
+	Logger("SERVER", fmt.Sprintf("Total Clients: %d", len(idx.clients)))
 
 	conn.ReadCallback = func(conn *shared.Conn, message string) {
 		Logger("FROM CLIENT", message)
@@ -47,7 +51,7 @@ func clientRouter(idx *Index, w http.ResponseWriter, r *http.Request) {
 
 func Logger(prefix string, message string) {
 	if *Verbose {
-		log.Println(fmt.Sprintf("%s > %s"), prefix, message)
+		log.Println(fmt.Sprintf("%s > %s", prefix, message))
 	}
 }
 

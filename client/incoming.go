@@ -18,7 +18,7 @@ func IncomingRouter(conn *shared.Conn, message string) {
 	switch mtype := params.Get("type"); mtype {
 	default:
 		Debug("Unknown message type.")
-		Connection.Send("PONG")
+		conn.Send("PONG")
 	}
 }
 
@@ -41,5 +41,5 @@ func cmdProfile() {
 
 	profile.Set("os", runtime.GOOS)
 
-	Connection.Send(profile.Encode())
+	//Connection.Send(profile.Encode())
 }
