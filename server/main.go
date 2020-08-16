@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
@@ -10,11 +11,53 @@ import (
 	"github.com/mikeflynn/the-fearsome-five/shared"
 )
 
-var Verbose *bool
+var Verbose bool = false
 
-func adminRouter(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "Not found", http.StatusNotFound)
-	return
+func adminRouter(idx *Index, w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	switch r.Method {
+	case "GET":
+		switch r.URL.Path {
+		case "/a/list":
+			resp := idx.list()
+
+			if err := json.NewEncoder(w).Encode(resp); err != nil {
+				http.Error(w, "Internal error", http.StatusInternalServerError)
+			}
+		default:
+			http.Error(w, "Not found", http.StatusNotImplemented)
+			return
+		}
+	case "POST":
+		switch r.URL.Path {
+		case "/a/send":
+			cid, ok := r.URL.Query()["cid"]
+			if !ok || len(cid[0]) < 1 {
+				http.Error(w, "Internal error", http.StatusBadRequest)
+				return
+			}
+
+			msg, ok := r.URL.Query()["msg"]
+			if !ok || len(msg[0]) < 1 {
+				http.Error(w, "Internal error", http.StatusBadRequest)
+				return
+			}
+
+			cmd := &Cmd{
+				clientUUID: cid[0],
+				payload:    shared.NewMessage("std", msg[0]),
+			}
+
+			idx.broadcast <- cmd
+		default:
+			http.Error(w, "Not found", http.StatusNotImplemented)
+			return
+		}
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
 }
 
 func clientRouter(idx *Index, w http.ResponseWriter, r *http.Request) {
@@ -35,10 +78,9 @@ func clientRouter(idx *Index, w http.ResponseWriter, r *http.Request) {
 	idx.register <- conn
 
 	Logger("SERVER", "Client connected!")
-	Logger("SERVER", fmt.Sprintf("Total Clients: %d", len(idx.clients)))
 
-	conn.ReadCallback = func(conn *shared.Conn, message string) {
-		Logger("FROM CLIENT", message)
+	conn.ReadCallback = func(conn *shared.Conn, message *shared.Message) {
+		Logger("FROM CLIENT", string(message.Serialize()))
 	}
 
 	conn.CloseCallback = func(conn *shared.Conn) {
@@ -50,16 +92,19 @@ func clientRouter(idx *Index, w http.ResponseWriter, r *http.Request) {
 }
 
 func Logger(prefix string, message string) {
-	if *Verbose {
+	if Verbose {
 		log.Println(fmt.Sprintf("%s > %s", prefix, message))
 	}
 }
 
 func main() {
 	addr := flag.String("listen", "0.0.0.0:8000", "API listen address.")
-	Verbose = flag.Bool("verbose", false, "Display extra logging.")
-
+	verbose := flag.Bool("verbose", false, "Display extra logging.")
 	flag.Parse()
+
+	Verbose = *verbose
+
+	Logger("INIT", "Starting with verbose on!")
 
 	shared.Logger = func(message string) {
 		Logger("LIBRARY", message)
@@ -68,7 +113,11 @@ func main() {
 	index := initIndex()
 	go index.start()
 
-	http.HandleFunc("/a", adminRouter)
+	http.HandleFunc("/a/", func(w http.ResponseWriter, r *http.Request) {
+		Logger("ADMIN REQ", fmt.Sprintf("%s:%s", r.Method, r.URL.Path))
+		adminRouter(index, w, r)
+	})
+
 	http.HandleFunc("/c", func(w http.ResponseWriter, r *http.Request) {
 		clientRouter(index, w, r)
 	})

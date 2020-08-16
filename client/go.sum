@@ -1,0 +1,5 @@
+github.com/gorilla/websocket v1.4.2 h1:+/TMaTYc4QFitKJxsQ7Yye35DkWvkdLcvGKqM+x0Ufc=
+github.com/gorilla/websocket v1.4.2/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
+github.com/mikeflynn/the-fearsome-five v0.0.0-20200815234017-030f7a8e3515 h1:zRpyxUSjJHFZHbaeCpxxZU9fnpgGo/iJBsT3U+NZDGE=
+github.com/mikeflynn/the-fearsome-five/shared v0.0.0-20200815234017-030f7a8e3515 h1:xLU2Pmcm5VA+WbWYFIuXvy7+jKBz1qA0BTi73mXZmjA=
+github.com/mikeflynn/the-fearsome-five/shared v0.0.0-20200815234017-030f7a8e3515/go.mod h1:9upkqseiCEc8PZ5Oi5IYOfy+yZW+gtXLEjFLYZNPt34=

@@ -14,6 +14,22 @@ import (
 
 var verbose *bool
 
+func Debug(message string) {
+	if *verbose == true {
+		fmt.Println(message)
+	}
+}
+
+func GetServer(server string) string {
+	addr := url.URL{
+		Scheme: "ws",
+		Host:   fmt.Sprintf("%s", server),
+		Path:   "/c",
+	}
+
+	return addr.String()
+}
+
 func main() {
 	server := flag.String("server", "localhost:8000", "Server hostname.")
 	verboseFlag := flag.Bool("verbose", false, "Additional debugging logs.")
@@ -30,8 +46,9 @@ func main() {
 
 	defer connection.Close()
 
-	connection.ReadCallback = func(conn *shared.Conn, message string) {
-		IncomingRouter(conn, message)
+	connection.ReadCallback = func(conn *shared.Conn, message *shared.Message) {
+		fmt.Println(string(message.Serialize()))
+		conn.Send(message)
 	}
 
 	go func() {
@@ -39,7 +56,7 @@ func main() {
 			Debug("Checking connection...")
 			if connection.Establish(GetServer(*server)) {
 				go connection.WritePump()
-				connection.ReadPump()
+				go connection.ReadPump()
 			}
 
 			time.Sleep(30 * time.Second)
@@ -54,20 +71,4 @@ func main() {
 			os.Exit(0)
 		}
 	}
-}
-
-func Debug(message string) {
-	if *verbose == true {
-		fmt.Println(message)
-	}
-}
-
-func GetServer(server string) string {
-	addr := url.URL{
-		Scheme: "ws",
-		Host:   fmt.Sprintf("%s", server),
-		Path:   "/c",
-	}
-
-	return addr.String()
 }
