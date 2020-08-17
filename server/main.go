@@ -44,12 +44,41 @@ func adminRouter(idx *Index, w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
+			doWait := false
+			waitParam, ok := r.URL.Query()["wait"]
+			if ok && len(waitParam[0]) == 1 {
+				doWait = true
+			}
+
+			client, err := idx.clientByUUID(cid[0])
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+
 			cmd := &Cmd{
-				clientUUID: cid[0],
-				payload:    shared.NewMessage("std", msg[0]),
+				ClientUUID: client.UUID,
+				Payload:    shared.NewMessage("std", msg[0]),
+			}
+
+			if doWait {
+				client.waitingOnResp = true
 			}
 
 			idx.broadcast <- cmd
+
+			if doWait {
+				resp := <-client.respChan
+				client.waitingOnResp = false
+
+				if err := json.NewEncoder(w).Encode(resp); err != nil {
+					http.Error(w, "Internal error", http.StatusInternalServerError)
+				}
+			} else {
+				if err := json.NewEncoder(w).Encode(map[string]bool{"success": true}); err != nil {
+					http.Error(w, "Internal error", http.StatusInternalServerError)
+				}
+			}
 		default:
 			http.Error(w, "Not found", http.StatusNotImplemented)
 			return
@@ -80,7 +109,13 @@ func clientRouter(idx *Index, w http.ResponseWriter, r *http.Request) {
 	Logger("SERVER", "Client connected!")
 
 	conn.ReadCallback = func(conn *shared.Conn, message *shared.Message) {
-		Logger("FROM CLIENT", string(message.Serialize()))
+		client := idx.clients[conn]
+		Logger(fmt.Sprintf("%s:", client.UUID), string(message.Serialize()))
+
+		idx.recieve <- &Resp{
+			ClientUUID: client.UUID,
+			Payload:    message,
+		}
 	}
 
 	conn.CloseCallback = func(conn *shared.Conn) {

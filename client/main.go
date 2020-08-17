@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	//"math/rand"
 	"net/url"
 	"os"
@@ -16,7 +17,7 @@ var verbose *bool
 
 func Debug(message string) {
 	if *verbose == true {
-		fmt.Println(message)
+		log.Println(message)
 	}
 }
 
@@ -47,7 +48,9 @@ func main() {
 	defer connection.Close()
 
 	connection.ReadCallback = func(conn *shared.Conn, message *shared.Message) {
-		fmt.Println(string(message.Serialize()))
+
+		// Echo
+		time.Sleep(5 * time.Second)
 		conn.Send(message)
 	}
 
