@@ -175,10 +175,15 @@ func (c *Conn) Send(message *Message) {
 // Message
 
 type Message struct {
-	Action  string `json:"action"`
-	Body    string `json:"body"`
-	Context string `json:"context"`
+	Action   string `json:"action"`
+	Body     string `json:"body"`
+	Encoding string `json:"encoding"`
 }
+
+const (
+	EncodingText = "text/plain"
+	EncodingJSON = "application/json"
+)
 
 func ReadMessage(jsonStr []byte) *Message {
 	m := &Message{}
@@ -187,11 +192,11 @@ func ReadMessage(jsonStr []byte) *Message {
 	return m
 }
 
-func NewMessage(action string, body string) *Message {
+func NewMessage(action string, body string, encoding string) *Message {
 	return &Message{
-		Action:  action,
-		Body:    body,
-		Context: "",
+		Action:   action,
+		Body:     body,
+		Encoding: encoding,
 	}
 }
 
