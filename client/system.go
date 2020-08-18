@@ -9,7 +9,9 @@ import (
 	//"os"
 	"encoding/json"
 	"errors"
+	"io/ioutil"
 	"net"
+	"net/http"
 	"os/user"
 	"runtime"
 	"strings"
@@ -18,7 +20,8 @@ import (
 type System struct {
 	UUID   string `json:"uuid"`
 	OS     string `json:"os"`
-	LanIP  string `json:"lan_ip"`
+	LanIP  string `json:"ip_internal"`
+	ExtIP  string `json:"ip_external"`
 	User   string `json:"user"`
 	Groups string `json:"groups"`
 }
@@ -32,7 +35,6 @@ func InitSystem() *System {
 
 	if err := sys.load(); err != nil {
 		sys.GetUser()
-		sys.GetInternalIP()
 		sys.GetUserGroups()
 	}
 
@@ -107,6 +109,26 @@ func (sys *System) GetInternalIP() (string, error) {
 	}
 
 	return sys.LanIP, nil
+}
+
+func (sys *System) GetExternalIP(reload bool) (string, error) {
+	if reload || sys.ExtIP == "" {
+		resp, err := http.Get("http://checkip.amazonaws.com/")
+		if err != nil {
+			return "", err
+		}
+
+		defer resp.Body.Close()
+
+		data, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return "", err
+		}
+
+		sys.ExtIP = string(data)
+	}
+
+	return sys.ExtIP, nil
 }
 
 func (sys *System) RunCommand() (string, error) {

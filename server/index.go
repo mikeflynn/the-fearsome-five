@@ -19,6 +19,7 @@ type Client struct {
 	UUID          string     `json:"uuid"`
 	OS            string     `json:"os"`
 	User          string     `json:"user"`
+	ExtIP         string     `json:"ip_external"`
 	waitingOnResp bool       `json:"-"`
 	respChan      chan *Resp `json:"-"`
 }
