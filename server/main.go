@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
@@ -12,82 +11,6 @@ import (
 )
 
 var Verbose bool = false
-
-func adminRouter(idx *Index, w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
-	switch r.Method {
-	case "GET":
-		switch r.URL.Path {
-		case "/a/list":
-			resp := idx.list()
-
-			if err := json.NewEncoder(w).Encode(resp); err != nil {
-				http.Error(w, "Internal error", http.StatusInternalServerError)
-			}
-		default:
-			http.Error(w, "Not found", http.StatusNotImplemented)
-			return
-		}
-	case "POST":
-		switch r.URL.Path {
-		case "/a/send":
-			cid, ok := r.URL.Query()["cid"]
-			if !ok || len(cid[0]) < 1 {
-				http.Error(w, "Internal error", http.StatusBadRequest)
-				return
-			}
-
-			msg, ok := r.URL.Query()["msg"]
-			if !ok || len(msg[0]) < 1 {
-				http.Error(w, "Internal error", http.StatusBadRequest)
-				return
-			}
-
-			doWait := false
-			waitParam, ok := r.URL.Query()["wait"]
-			if ok && len(waitParam[0]) == 1 {
-				doWait = true
-			}
-
-			client, err := idx.clientByUUID(cid[0])
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				return
-			}
-
-			cmd := &Cmd{
-				ClientUUID: client.UUID,
-				Payload:    shared.NewMessage("std", msg[0]),
-			}
-
-			if doWait {
-				client.waitingOnResp = true
-			}
-
-			idx.broadcast <- cmd
-
-			if doWait {
-				resp := <-client.respChan
-				client.waitingOnResp = false
-
-				if err := json.NewEncoder(w).Encode(resp); err != nil {
-					http.Error(w, "Internal error", http.StatusInternalServerError)
-				}
-			} else {
-				if err := json.NewEncoder(w).Encode(map[string]bool{"success": true}); err != nil {
-					http.Error(w, "Internal error", http.StatusInternalServerError)
-				}
-			}
-		default:
-			http.Error(w, "Not found", http.StatusNotImplemented)
-			return
-		}
-	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-}
 
 func clientRouter(idx *Index, w http.ResponseWriter, r *http.Request) {
 	upgrader := websocket.Upgrader{
@@ -112,9 +35,11 @@ func clientRouter(idx *Index, w http.ResponseWriter, r *http.Request) {
 		client := idx.clients[conn]
 		Logger(fmt.Sprintf("%s:", client.UUID), string(message.Serialize()))
 
-		idx.recieve <- &Resp{
-			ClientUUID: client.UUID,
-			Payload:    message,
+		if !clientMsgRouter(idx, conn, message) {
+			idx.recieve <- &Resp{
+				ClientUUID: client.UUID,
+				Payload:    message,
+			}
 		}
 	}
 
@@ -124,6 +49,34 @@ func clientRouter(idx *Index, w http.ResponseWriter, r *http.Request) {
 
 	go conn.WritePump()
 	go conn.ReadPump()
+}
+
+func adminRouter(idx *Index, w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	switch r.Method {
+	case "GET":
+		switch r.URL.Path {
+		case "/a/list":
+			adminGetList(idx, w, r)
+			return
+		default:
+			http.Error(w, "Not found", http.StatusNotImplemented)
+			return
+		}
+	case "POST":
+		switch r.URL.Path {
+		case "/a/send":
+			adminPostSend(idx, w, r)
+			return
+		default:
+			http.Error(w, "Not found", http.StatusNotImplemented)
+			return
+		}
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
 }
 
 func Logger(prefix string, message string) {

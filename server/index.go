@@ -17,6 +17,8 @@ type Index struct {
 
 type Client struct {
 	UUID          string     `json:"uuid"`
+	OS            string     `json:"os"`
+	User          string     `json:"user"`
 	waitingOnResp bool       `json:"-"`
 	respChan      chan *Resp `json:"-"`
 }

@@ -43,15 +43,21 @@ func main() {
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
 
+	system := InitSystem()
+
 	connection := shared.InitConnection()
 
 	defer connection.Close()
 
 	connection.ReadCallback = func(conn *shared.Conn, message *shared.Message) {
-
-		// Echo
-		time.Sleep(5 * time.Second)
-		conn.Send(message)
+		switch message.Action {
+		case "setName":
+			system.UUID = message.Body
+		default:
+			// Ignore
+			Debug("Unroutable message: " + string(message.Serialize()))
+			return
+		}
 	}
 
 	go func() {
@@ -60,6 +66,9 @@ func main() {
 			if connection.Establish(GetServer(*server)) {
 				go connection.WritePump()
 				go connection.ReadPump()
+
+				// Send the system report
+				connection.Send(shared.NewMessage("systemReport", system.toJSON(), shared.EncodingJSON))
 			}
 
 			time.Sleep(30 * time.Second)

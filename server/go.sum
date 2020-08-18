@@ -9,3 +9,7 @@ github.com/lithammer/shortuuid/v3 v3.0.4/go.mod h1:RviRjexKqIzx/7r1peoAITm6m7gni
 github.com/mikeflynn/the-fearsome-five v0.0.0-20200815234017-030f7a8e3515 h1:zRpyxUSjJHFZHbaeCpxxZU9fnpgGo/iJBsT3U+NZDGE=
 github.com/mikeflynn/the-fearsome-five/shared v0.0.0-20200815234017-030f7a8e3515 h1:xLU2Pmcm5VA+WbWYFIuXvy7+jKBz1qA0BTi73mXZmjA=
 github.com/mikeflynn/the-fearsome-five/shared v0.0.0-20200815234017-030f7a8e3515/go.mod h1:9upkqseiCEc8PZ5Oi5IYOfy+yZW+gtXLEjFLYZNPt34=
+github.com/mikeflynn/the-fearsome-five/shared v0.0.0-20200818053543-b4b57da4d390 h1:RudO7sV+TfhQo6Enfji1L98/WM+jY50LkDO/5RNArU4=
+github.com/mikeflynn/the-fearsome-five/shared v0.0.0-20200818053543-b4b57da4d390/go.mod h1:9upkqseiCEc8PZ5Oi5IYOfy+yZW+gtXLEjFLYZNPt34=
+github.com/mikeflynn/the-fearsome-five/shared v0.0.0-20200818060417-7fdd775fa168 h1:Kuxfabm1GHtCABTpaTfSYfPHrwwTdpmv+Vp0CiU3J/U=
+github.com/mikeflynn/the-fearsome-five/shared v0.0.0-20200818060417-7fdd775fa168/go.mod h1:9upkqseiCEc8PZ5Oi5IYOfy+yZW+gtXLEjFLYZNPt34=
