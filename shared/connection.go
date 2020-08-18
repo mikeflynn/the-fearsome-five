@@ -204,3 +204,18 @@ func (m *Message) Serialize() []byte {
 	ret, _ := json.Marshal(m)
 	return ret
 }
+
+func (m *Message) GetBodyJSON() (map[string]string, error) {
+	body := map[string]string{}
+
+	if m.Encoding != EncodingJSON {
+		return body, errors.New("Body encoding is not JSON.")
+	}
+
+	err := json.Unmarshal([]byte(m.Body), &body)
+	if err != nil {
+		return body, err
+	}
+
+	return body, nil
+}
