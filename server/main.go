@@ -33,7 +33,6 @@ func clientRouter(idx *Index, w http.ResponseWriter, r *http.Request) {
 
 	conn.ReadCallback = func(conn *shared.Conn, message *shared.Message) {
 		client := idx.clients[conn]
-		Logger(fmt.Sprintf("%s:", client.UUID), string(message.Serialize()))
 
 		if !clientMsgRouter(idx, conn, message) {
 			idx.recieve <- &Resp{

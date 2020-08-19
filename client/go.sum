@@ -7,3 +7,5 @@ github.com/mikeflynn/the-fearsome-five/shared v0.0.0-20200818053543-b4b57da4d390
 github.com/mikeflynn/the-fearsome-five/shared v0.0.0-20200818053543-b4b57da4d390/go.mod h1:9upkqseiCEc8PZ5Oi5IYOfy+yZW+gtXLEjFLYZNPt34=
 github.com/mikeflynn/the-fearsome-five/shared v0.0.0-20200818060417-7fdd775fa168 h1:Kuxfabm1GHtCABTpaTfSYfPHrwwTdpmv+Vp0CiU3J/U=
 github.com/mikeflynn/the-fearsome-five/shared v0.0.0-20200818060417-7fdd775fa168/go.mod h1:9upkqseiCEc8PZ5Oi5IYOfy+yZW+gtXLEjFLYZNPt34=
+github.com/mitchellh/go-ps v1.0.0 h1:i6ampVEEF4wQFF+bkYfwYgY+F/uYJDktmvLPf7qIgjc=
+github.com/mitchellh/go-ps v1.0.0/go.mod h1:J4lOc8z8yJs6vUwklHw2XEIiT4z4C40KtWVN3nvg8Pg=
