@@ -14,7 +14,7 @@ const (
 	writeWait      = 60 * time.Second
 	pongWait       = 60 * time.Second
 	pingPeriod     = (pongWait * 9) / 10
-	maxMessageSize = 1024
+	MaxMessageSize = 1024
 )
 
 var (
@@ -86,7 +86,7 @@ func (c *Conn) ReadPump() {
 		c.Close()
 	}()
 
-	c.Ws.SetReadLimit(maxMessageSize)
+	c.Ws.SetReadLimit(MaxMessageSize)
 	c.Ws.SetReadDeadline(time.Now().Add(pongWait))
 	c.Ws.SetPongHandler(func(string) error { c.Ws.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	for {
