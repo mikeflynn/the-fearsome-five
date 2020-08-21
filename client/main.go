@@ -15,6 +15,8 @@ import (
 	ps "github.com/mitchellh/go-ps"
 )
 
+const VERSION = "0.1"
+
 var verbose *bool
 
 func Debug(message string) {
@@ -58,6 +60,7 @@ func main() {
 	flag.Parse()
 
 	verbose = verboseFlag
+	shared.MaxMessageSize = 1024 * 24
 	shared.Logger = Debug
 
 	interrupt := make(chan os.Signal, 1)
@@ -85,6 +88,13 @@ func main() {
 		switch message.Action {
 		case "setName":
 			system.UUID = message.Body
+		case "runCommand":
+			output, err := system.RunCommand(message)
+			if err != nil {
+				output = err.Error()
+			}
+
+			connection.Send(shared.NewMessage(message.Action, output, shared.EncodingText))
 		default:
 			// Ignore
 			Debug("Unroutable message: " + string(message.Serialize()))

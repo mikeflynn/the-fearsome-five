@@ -93,6 +93,7 @@ func main() {
 
 	Logger("INIT", "Starting with verbose on!")
 
+	shared.MaxMessageSize = 1024 * 24
 	shared.Logger = func(message string) {
 		Logger("LIBRARY", message)
 	}

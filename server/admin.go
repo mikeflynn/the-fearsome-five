@@ -16,25 +16,35 @@ func adminGetList(idx *Index, w http.ResponseWriter, r *http.Request) {
 }
 
 func adminPostSend(idx *Index, w http.ResponseWriter, r *http.Request) {
-	cid, ok := r.URL.Query()["cid"]
-	if !ok || len(cid[0]) < 1 {
+	if err := r.ParseForm(); err != nil {
 		http.Error(w, "Internal error", http.StatusBadRequest)
 		return
 	}
 
-	msg, ok := r.URL.Query()["msg"]
-	if !ok || len(msg[0]) < 1 {
+	cid := r.FormValue("cid")
+	if cid == "" {
+		http.Error(w, "Internal error", http.StatusBadRequest)
+		return
+	}
+
+	action := r.FormValue("action")
+	if action == "" {
+		action = "std"
+	}
+
+	msg := r.FormValue("msg")
+	if msg == "" {
 		http.Error(w, "Internal error", http.StatusBadRequest)
 		return
 	}
 
 	doWait := false
-	waitParam, ok := r.URL.Query()["wait"]
-	if ok && len(waitParam[0]) == 1 {
+	waitParam := r.FormValue("wait")
+	if waitParam != "" {
 		doWait = true
 	}
 
-	client, err := idx.clientByUUID(cid[0])
+	client, err := idx.clientByUUID(cid)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -42,7 +52,7 @@ func adminPostSend(idx *Index, w http.ResponseWriter, r *http.Request) {
 
 	cmd := &Cmd{
 		ClientUUID: client.UUID,
-		Payload:    shared.NewMessage("std", msg[0], shared.EncodingText),
+		Payload:    shared.NewMessage(action, msg, shared.EncodingText),
 	}
 
 	if doWait {

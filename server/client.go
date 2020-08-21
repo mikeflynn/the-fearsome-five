@@ -19,6 +19,10 @@ func clientMsgRouter(idx *Index, conn *shared.Conn, message *shared.Message) boo
 					idx.clients[conn].User = val
 				}
 
+				if val, ok := body["client_version"]; ok {
+					idx.clients[conn].Version = val
+				}
+
 				updateName := true
 				if val, ok := body["uuid"]; ok {
 					if val != "" {

@@ -16,6 +16,7 @@ type Index struct {
 }
 
 type Client struct {
+	Version       string     `json:"version"`
 	UUID          string     `json:"uuid"`
 	OS            string     `json:"os"`
 	User          string     `json:"user"`
