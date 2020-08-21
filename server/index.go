@@ -16,13 +16,18 @@ type Index struct {
 }
 
 type Client struct {
-	Version       string     `json:"version"`
-	UUID          string     `json:"uuid"`
-	OS            string     `json:"os"`
-	User          string     `json:"user"`
-	ExtIP         string     `json:"ip_external"`
-	waitingOnResp bool       `json:"-"`
-	respChan      chan *Resp `json:"-"`
+	UUID          string       `json:"uuid"`
+	Report        ClientReport `json:"client_report"`
+	waitingOnResp bool         `json:"-"`
+	respChan      chan *Resp   `json:"-"`
+}
+
+type ClientReport struct {
+	Version   string `json:"client_version"`
+	OS        string `json:"os"`
+	OSVersion string `json:"os_version"`
+	User      string `json:"user"`
+	ExtIP     string `json:"ip_external"`
 }
 
 type Cmd struct {
@@ -55,6 +60,7 @@ func (i *Index) start() {
 		case conn := <-i.register:
 			i.clients[conn] = &Client{
 				UUID:          getUUID(),
+				Report:        ClientReport{},
 				waitingOnResp: false,
 				respChan:      make(chan *Resp),
 			}

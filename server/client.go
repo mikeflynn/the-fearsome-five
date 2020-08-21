@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/json"
+
 	"github.com/mikeflynn/the-fearsome-five/shared"
 )
 
@@ -11,16 +13,15 @@ func clientMsgRouter(idx *Index, conn *shared.Conn, message *shared.Message) boo
 
 		if err == nil {
 			if client, yes := idx.clients[conn]; yes {
-				if val, ok := body["os"]; ok {
-					client.OS = val
+				jsonBody, err := json.Marshal(body)
+				if err != nil {
+					Logger("systemReport", err.Error())
+					return false
 				}
 
-				if val, ok := body["user"]; ok {
-					idx.clients[conn].User = val
-				}
-
-				if val, ok := body["client_version"]; ok {
-					idx.clients[conn].Version = val
+				if err := json.Unmarshal(jsonBody, &client.Report); err != nil {
+					Logger("systemReport", err.Error())
+					return false
 				}
 
 				updateName := true

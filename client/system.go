@@ -25,6 +25,7 @@ type System struct {
 	ClientVersion string `json:"client_version"`
 	UUID          string `json:"uuid"`
 	OS            string `json:"os"`
+	OSVersion     string `json:"os_version"`
 	LanIP         string `json:"ip_internal"`
 	ExtIP         string `json:"ip_external"`
 	User          string `json:"user"`
@@ -40,6 +41,7 @@ func InitSystem() *System {
 	}
 
 	if err := sys.load(); err != nil {
+		sys.GetOSVersion()
 		sys.GetUser()
 		sys.GetUserGroups()
 	}
@@ -131,10 +133,42 @@ func (sys *System) GetExternalIP(reload bool) (string, error) {
 			return "", err
 		}
 
-		sys.ExtIP = string(data)
+		sys.ExtIP = strings.TrimSpace(string(data))
 	}
 
 	return sys.ExtIP, nil
+}
+
+func (sys *System) GetOSVersion() (string, error) {
+	if sys.OSVersion == "" {
+		switch sys.OS {
+		case "darwin":
+			out, err := exec.Command("defaults", "read", "loginwindow", "SystemVersionStampAsString").Output()
+			if err != nil {
+				return "", err
+			}
+
+			sys.OSVersion = strings.TrimSpace(string(out))
+		case "windows":
+			out, err := exec.Command("ver").Output()
+			if err != nil {
+				return "", err
+			}
+
+			sys.OSVersion = strings.TrimSpace(string(out))
+		case "linux":
+			out, err := exec.Command("uname", "-r").Output()
+			if err != nil {
+				return "", err
+			}
+
+			sys.OSVersion = strings.TrimSpace(string(out))
+		default:
+			return "", errors.New("Unsupported OS.")
+		}
+	}
+
+	return sys.OSVersion, nil
 }
 
 func (sys *System) RunCommand(message *shared.Message) (string, error) {
