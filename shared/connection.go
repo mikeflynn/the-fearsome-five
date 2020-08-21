@@ -11,16 +11,16 @@ import (
 )
 
 const (
-	writeWait      = 60 * time.Second
-	pongWait       = 60 * time.Second
-	pingPeriod     = (pongWait * 9) / 10
-	MaxMessageSize = 1024
+	writeWait  = 60 * time.Second
+	pongWait   = 60 * time.Second
+	pingPeriod = (pongWait * 9) / 10
 )
 
 var (
-	newline = []byte{'\n'}
-	space   = []byte{' '}
-	Logger  func(string)
+	newline        = []byte{'\n'}
+	space          = []byte{' '}
+	Logger         func(string)
+	MaxMessageSize = 1024 * 10
 )
 
 // Connection
@@ -86,7 +86,7 @@ func (c *Conn) ReadPump() {
 		c.Close()
 	}()
 
-	c.Ws.SetReadLimit(MaxMessageSize)
+	c.Ws.SetReadLimit(int64(MaxMessageSize))
 	c.Ws.SetReadDeadline(time.Now().Add(pongWait))
 	c.Ws.SetPongHandler(func(string) error { c.Ws.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	for {
