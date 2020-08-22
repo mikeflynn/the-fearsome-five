@@ -73,7 +73,7 @@ func (c *Conn) WritePump() {
 				return
 			}
 
-			w.Write(message.Body)
+			w.Write(message.Serialize())
 			if err := w.Close(); err != nil {
 				return
 			}
@@ -194,7 +194,7 @@ const (
 
 func ReadMessage(jsonStr []byte) *Message {
 	m := &Message{}
-	json.Unmarshal([]byte(jsonStr), m)
+	json.Unmarshal(jsonStr, m)
 
 	return m
 }
