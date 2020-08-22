@@ -27,7 +27,7 @@ var (
 
 type Conn struct {
 	Ws            *websocket.Conn
-	SendChan      chan []byte
+	SendChan      chan *Message
 	ReadCallback  func(*Conn, *Message)
 	CloseCallback func(*Conn)
 	State         int // 0 = ready; -1 = closed
@@ -35,7 +35,7 @@ type Conn struct {
 
 func InitConnection() *Conn {
 	return &Conn{
-		SendChan: make(chan []byte, 256),
+		SendChan: make(chan *Message, 256),
 		State:    -1,
 	}
 }
@@ -62,12 +62,18 @@ func (c *Conn) WritePump() {
 			}
 
 			c.Ws.SetWriteDeadline(time.Now().Add(writeWait))
-			w, err := c.Ws.NextWriter(websocket.TextMessage)
+
+			msgType := websocket.TextMessage
+			if message.Encoding == EncodingFile {
+				msgType = websocket.BinaryMessage
+			}
+
+			w, err := c.Ws.NextWriter(msgType)
 			if err != nil {
 				return
 			}
 
-			w.Write(message)
+			w.Write(message.Body)
 			if err := w.Close(); err != nil {
 				return
 			}
@@ -169,20 +175,21 @@ func (c *Conn) Close() {
 }
 
 func (c *Conn) Send(message *Message) {
-	c.SendChan <- []byte(message.Serialize())
+	c.SendChan <- message
 }
 
 // Message
 
 type Message struct {
 	Action   string `json:"action"`
-	Body     string `json:"body"`
+	Body     []byte `json:"body"`
 	Encoding string `json:"encoding"`
 }
 
 const (
 	EncodingText = "text/plain"
 	EncodingJSON = "application/json"
+	EncodingFile = "application/octet-stream"
 )
 
 func ReadMessage(jsonStr []byte) *Message {
@@ -192,7 +199,7 @@ func ReadMessage(jsonStr []byte) *Message {
 	return m
 }
 
-func NewMessage(action string, body string, encoding string) *Message {
+func NewMessage(action string, body []byte, encoding string) *Message {
 	return &Message{
 		Action:   action,
 		Body:     body,
