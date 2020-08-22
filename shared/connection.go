@@ -219,7 +219,7 @@ func (m *Message) GetBodyJSON() (map[string]string, error) {
 		return body, errors.New("Body encoding is not JSON.")
 	}
 
-	err := json.Unmarshal([]byte(m.Body), &body)
+	err := json.Unmarshal(m.Body, &body)
 	if err != nil {
 		return body, err
 	}
