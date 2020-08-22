@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"strings"
 
 	"github.com/mikeflynn/the-fearsome-five/shared"
 )
@@ -41,19 +40,17 @@ func adminFileReq(idx *Index, w http.ResponseWriter, r *http.Request) {
 
 	cmd := &Cmd{
 		ClientUUID: client.UUID,
-		Payload:    shared.NewMessage("fileRequest", filepath, shared.EncodingText),
+		Payload:    shared.NewMessage("fileRequest", []byte(filepath), shared.EncodingText),
 	}
 
 	client.waitingOnResp = true
 	idx.broadcast <- cmd
 
-	msg := <-client.respChan
+	resp := <-client.respChan
 	client.waitingOnResp = false
 
-	rep := loadResp(msg)
-
 	w.Header().Set("Content-Type", http.DetectContentType(resp.Payload.Body))
-	if _, err := io.Copy(w, resp.Payload.Body); err != nil {
+	if _, err := io.Copy(w, bytes.NewReader(resp.Payload.Body)); err != nil {
 		http.Error(w, "Internal error", http.StatusInternalServerError)
 		return
 	}

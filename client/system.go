@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"io"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -213,10 +214,14 @@ func (sys *System) SendFile(msg *shared.Message) ([]byte, error) {
 
 	if _, err := os.Stat(filepath); err == nil {
 		file, err := os.Open(filepath)
+		if err != nil {
+			return []byte{}, errors.New("Can't read file.")
+		}
+
 		buf := bytes.NewBuffer(nil)
 
 		if _, err := io.Copy(buf, file); err != nil {
-			return []byte{}, errors.New("Can't read file.")
+			return []byte{}, errors.New("Can't copy file.")
 		}
 
 		return []byte(buf.Bytes()), nil

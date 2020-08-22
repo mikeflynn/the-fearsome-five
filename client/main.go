@@ -105,7 +105,7 @@ func main() {
 		case "fileRequest":
 			output, err := system.SendFile(message)
 			if err != nil {
-				output = "Error: " + err.Error()
+				output = []byte("Error: " + err.Error())
 			}
 
 			connection.Send(shared.NewMessage("fileRequestResponse", output, ""))
