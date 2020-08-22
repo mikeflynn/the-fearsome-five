@@ -102,6 +102,13 @@ func main() {
 			}
 
 			connection.Send(shared.NewMessage("fileTransferStatus", []byte(output), shared.EncodingText))
+		case "fileRequest":
+			output, err := system.SendFile(message)
+			if err != nil {
+				output = "Error: " + err.Error()
+			}
+
+			connection.Send(shared.NewMessage("fileRequestResponse", output, ""))
 		default:
 			// Ignore
 			Debug("Unroutable message: " + string(message.Serialize()))

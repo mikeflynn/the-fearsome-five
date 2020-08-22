@@ -6,11 +6,13 @@ like getting a username or file path.
 */
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
 	"net"
 	"net/http"
+	"os"
 	"os/exec"
 	"os/user"
 	"runtime"
@@ -206,6 +208,19 @@ func (sys *System) SaveFile(msg *shared.Message) (string, error) {
 	return filename, nil
 }
 
-func (sys *System) SendFile() (string, error) {
-	return "", errors.New("Not yet implemented.")
+func (sys *System) SendFile(msg *shared.Message) ([]byte, error) {
+	filepath := string(msg.Body)
+
+	if _, err := os.Stat(filepath); err == nil {
+		file, err := os.Open(filepath)
+		buf := bytes.NewBuffer(nil)
+
+		if _, err := io.Copy(buf, file); err != nil {
+			return []byte{}, errors.New("Can't read file.")
+		}
+
+		return []byte(buf.Bytes()), nil
+	} else {
+		return []byte{}, errors.New("File not found.")
+	}
 }

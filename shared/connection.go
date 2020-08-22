@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -192,6 +194,30 @@ const (
 	EncodingFile = "application/octet-stream"
 )
 
+func GetEncoding(input []byte) string {
+	contentType := http.DetectContentType(input)
+
+	fileType := EncodingText
+	switch {
+	case strings.HasPrefix(contentType, "application/json"):
+		fileType = EncodingJSON
+	case strings.HasPrefix(contentType, "application"):
+		fileType = EncodingFile
+	case strings.HasPrefix(contentType, "text"):
+		fileType = EncodingText
+	case strings.HasPrefix(contentType, "image"):
+		fileType = EncodingFile
+	case strings.HasPrefix(contentType, "video"):
+		fileType = EncodingFile
+	case strings.HasPrefix(contentType, "audio"):
+		fileType = EncodingFile
+	default:
+		fileType = EncodingText
+	}
+
+	return fileType
+}
+
 func ReadMessage(jsonStr []byte) *Message {
 	m := &Message{}
 	json.Unmarshal(jsonStr, m)
@@ -200,6 +226,10 @@ func ReadMessage(jsonStr []byte) *Message {
 }
 
 func NewMessage(action string, body []byte, encoding string) *Message {
+	if encoding == "" {
+		encoding = GetEncoding(body)
+	}
+
 	return &Message{
 		Action:   action,
 		Body:     body,

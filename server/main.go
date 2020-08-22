@@ -51,8 +51,6 @@ func clientRouter(idx *Index, w http.ResponseWriter, r *http.Request) {
 }
 
 func adminRouter(idx *Index, w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
 	switch r.Method {
 	case "GET":
 		switch r.URL.Path {
@@ -68,8 +66,11 @@ func adminRouter(idx *Index, w http.ResponseWriter, r *http.Request) {
 		case "/a/run":
 			adminRunCommand(idx, w, r)
 			return
-		case "/a/send":
-			adminSendFile(idx, w, r)
+		case "/a/fileSend":
+			adminFileSend(idx, w, r)
+			return
+		case "/a/fileReq":
+			adminFileReq(idx, w, r)
 			return
 		default:
 			http.Error(w, "Not found", http.StatusNotImplemented)
