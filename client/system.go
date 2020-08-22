@@ -16,6 +16,7 @@ import (
 	"os"
 	"os/exec"
 	"os/user"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"unsafe"
@@ -43,7 +44,7 @@ func InitSystem() *System {
 		UUID:          "",
 		OS:            runtime.GOOS,
 		Groups:        "",
-		tempDir:       ".",
+		tempDir:       "./",
 	}
 
 	if err := sys.load(); err != nil {
@@ -199,14 +200,30 @@ func (sys *System) RunCommand(message *shared.Message) (string, error) {
 }
 
 func (sys *System) SaveFile(msg *shared.Message) (string, error) {
-	filename := shortuuid.New()
+	// Did they request a filepath?
+	path := sys.tempDir
+	if v, err := msg.GetMeta("filepath"); err == nil {
+		path = v
+	}
 
-	err := ioutil.WriteFile(sys.tempDir+"/"+filename, msg.Body, 0744)
+	// Inspect the target path
+	if strings.HasSuffix(path, "/") {
+		path = path + shortuuid.New()
+	} else if strings.HasPrefix(path, "/") {
+		path = sys.tempDir + path
+	}
+
+	if _, err := os.Stat(filepath.Dir(path)); err != nil {
+		return "", err
+	}
+
+	// Save the file
+	err := ioutil.WriteFile(path, msg.Body, 0744)
 	if err != nil {
 		return "", err
 	}
 
-	return filename, nil
+	return path, nil
 }
 
 func (sys *System) SendFile(msg *shared.Message) ([]byte, error) {

@@ -95,6 +95,12 @@ func adminFileSend(idx *Index, w http.ResponseWriter, r *http.Request) {
 		Payload:    shared.NewMessage("fileTransfer", fileData, ""),
 	}
 
+	// Did a path get set?
+	filepath := r.FormValue("filepath")
+	if filepath != "" {
+		cmd.Payload.SetMeta("filepath", filepath)
+	}
+
 	client.waitingOnResp = true
 	idx.broadcast <- cmd
 
