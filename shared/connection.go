@@ -183,9 +183,10 @@ func (c *Conn) Send(message *Message) {
 // Message
 
 type Message struct {
-	Action   string `json:"action"`
-	Body     []byte `json:"body"`
-	Encoding string `json:"encoding"`
+	Action   string            `json:"action"`
+	Body     []byte            `json:"body"`
+	Encoding string            `json:"encoding"`
+	Metadata map[string]string `json:"metadata"`
 }
 
 const (
@@ -234,12 +235,35 @@ func NewMessage(action string, body []byte, encoding string) *Message {
 		Action:   action,
 		Body:     body,
 		Encoding: encoding,
+		Metadata: map[string]string{},
 	}
 }
 
 func (m *Message) Serialize() []byte {
 	ret, _ := json.Marshal(m)
 	return ret
+}
+
+func (m *Message) SetMeta(key string, value string) error {
+	m.Metadata[key] = value
+	return nil
+}
+
+func (m *Message) DelMeta(key string) error {
+	if _, ok := m.Metadata[key]; ok {
+		delete(m.Metadata, key)
+		return nil
+	}
+
+	return errors.New("Metadata key not found.")
+}
+
+func (m *Message) GetMeta(key string) (string, error) {
+	if val, ok := m.Metadata[key]; ok {
+		return val, nil
+	}
+
+	return "", errors.New("Metadata key not found.")
 }
 
 func (m *Message) GetBodyJSON() (map[string]string, error) {
