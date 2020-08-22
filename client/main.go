@@ -60,7 +60,7 @@ func main() {
 	flag.Parse()
 
 	verbose = verboseFlag
-	shared.MaxMessageSize = 1024 * 24
+	shared.MaxMessageSize = 1024 * 1024 * 1024
 	shared.Logger = Debug
 
 	interrupt := make(chan os.Signal, 1)
@@ -87,14 +87,21 @@ func main() {
 	connection.ReadCallback = func(conn *shared.Conn, message *shared.Message) {
 		switch message.Action {
 		case "setName":
-			system.UUID = message.Body
+			system.UUID = string(message.Body)
 		case "runCommand":
 			output, err := system.RunCommand(message)
 			if err != nil {
 				output = err.Error()
 			}
 
-			connection.Send(shared.NewMessage(message.Action, output, shared.EncodingText))
+			connection.Send(shared.NewMessage("runCommandOutput", []byte(output), shared.EncodingText))
+		case "fileTransfer":
+			output, err := system.SaveFile(message)
+			if err != nil {
+				output = "Error: " + err.Error()
+			}
+
+			connection.Send(shared.NewMessage("fileTransferStatus", []byte(output), shared.EncodingText))
 		default:
 			// Ignore
 			Debug("Unroutable message: " + string(message.Serialize()))

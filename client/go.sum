@@ -1,5 +1,11 @@
+github.com/google/uuid v1.1.1 h1:Gkbcsh/GbpXz7lPftLA3P6TYMwjCLYm83jiFQZF/3gY=
+github.com/google/uuid v1.1.1/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/gorilla/websocket v1.4.2 h1:+/TMaTYc4QFitKJxsQ7Yye35DkWvkdLcvGKqM+x0Ufc=
 github.com/gorilla/websocket v1.4.2/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
+github.com/lithammer/shortuuid v1.0.0 h1:kdcbvjGVEgqeVeDIRtnANOi/F6ftbKrtbxY+cjQmK1Q=
+github.com/lithammer/shortuuid v2.0.3+incompatible h1:ao1r3cQ9AUX+c6dZXwbCM/ELGf10EoO4SyqqxBXTyHc=
+github.com/lithammer/shortuuid/v3 v3.0.4 h1:uj4xhotfY92Y1Oa6n6HUiFn87CdoEHYUlTy0+IgbLrs=
+github.com/lithammer/shortuuid/v3 v3.0.4/go.mod h1:RviRjexKqIzx/7r1peoAITm6m7gnif/h+0zmolKJjzw=
 github.com/mattn/go-shellwords v1.0.10 h1:Y7Xqm8piKOO3v10Thp7Z36h4FYFjt5xB//6XvOrs2Gw=
 github.com/mattn/go-shellwords v1.0.10/go.mod h1:EZzvwXDESEeg03EKmM+RmDnNOPKG4lLtQsUlTZDWQ8Y=
 github.com/mikeflynn/the-fearsome-five v0.0.0-20200815234017-030f7a8e3515 h1:zRpyxUSjJHFZHbaeCpxxZU9fnpgGo/iJBsT3U+NZDGE=
@@ -13,5 +19,9 @@ github.com/mikeflynn/the-fearsome-five/shared v0.0.0-20200821065641-18e5f22d75fa
 github.com/mikeflynn/the-fearsome-five/shared v0.0.0-20200821065641-18e5f22d75fa/go.mod h1:9upkqseiCEc8PZ5Oi5IYOfy+yZW+gtXLEjFLYZNPt34=
 github.com/mikeflynn/the-fearsome-five/shared v0.0.0-20200821070718-e814299b5085 h1:Lecbv8jlVx1LT+SAdyJ13HOcbI4exY0j+bCn31yDPZw=
 github.com/mikeflynn/the-fearsome-five/shared v0.0.0-20200821070718-e814299b5085/go.mod h1:9upkqseiCEc8PZ5Oi5IYOfy+yZW+gtXLEjFLYZNPt34=
+github.com/mikeflynn/the-fearsome-five/shared v0.0.0-20200822002701-0b643d28aa3d h1:LbOKCdCXxvUsEE44hWi7/26QxoE3MRuBHe9cCPhirJw=
+github.com/mikeflynn/the-fearsome-five/shared v0.0.0-20200822002701-0b643d28aa3d/go.mod h1:9upkqseiCEc8PZ5Oi5IYOfy+yZW+gtXLEjFLYZNPt34=
+github.com/mikeflynn/the-fearsome-five/shared v0.0.0-20200822005527-18f699c0da68 h1:mSdOiOlbIOCHVxqSlIP1hW9QfI38MKzUGn66uPOOErs=
+github.com/mikeflynn/the-fearsome-five/shared v0.0.0-20200822005527-18f699c0da68/go.mod h1:9upkqseiCEc8PZ5Oi5IYOfy+yZW+gtXLEjFLYZNPt34=
 github.com/mitchellh/go-ps v1.0.0 h1:i6ampVEEF4wQFF+bkYfwYgY+F/uYJDktmvLPf7qIgjc=
 github.com/mitchellh/go-ps v1.0.0/go.mod h1:J4lOc8z8yJs6vUwklHw2XEIiT4z4C40KtWVN3nvg8Pg=

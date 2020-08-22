@@ -35,12 +35,10 @@ func clientMsgRouter(idx *Index, conn *shared.Conn, message *shared.Message) boo
 				if updateName {
 					idx.broadcast <- &Cmd{
 						ClientUUID: client.UUID,
-						Payload:    shared.NewMessage("setName", client.UUID, shared.EncodingText),
+						Payload:    shared.NewMessage("setName", []byte(client.UUID), shared.EncodingText),
 					}
 				}
 			}
-		} else {
-			Logger("clientMsgRouter", err.Error())
 		}
 
 		return true

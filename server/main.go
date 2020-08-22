@@ -65,8 +65,11 @@ func adminRouter(idx *Index, w http.ResponseWriter, r *http.Request) {
 		}
 	case "POST":
 		switch r.URL.Path {
+		case "/a/run":
+			adminRunCommand(idx, w, r)
+			return
 		case "/a/send":
-			adminPostSend(idx, w, r)
+			adminSendFile(idx, w, r)
 			return
 		default:
 			http.Error(w, "Not found", http.StatusNotImplemented)
@@ -93,7 +96,7 @@ func main() {
 
 	Logger("INIT", "Starting with verbose on!")
 
-	shared.MaxMessageSize = 1024 * 24
+	shared.MaxMessageSize = 1024 * 1024 * 1024
 	shared.Logger = func(message string) {
 		Logger("LIBRARY", message)
 	}
@@ -102,7 +105,7 @@ func main() {
 	go index.start()
 
 	http.HandleFunc("/a/", func(w http.ResponseWriter, r *http.Request) {
-		Logger("ADMIN REQ", fmt.Sprintf("%s:%s", r.Method, r.URL.Path))
+		//Logger("ADMIN REQ", fmt.Sprintf("%s:%s", r.Method, r.URL.Path))
 		adminRouter(index, w, r)
 	})
 

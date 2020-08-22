@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 
 	"github.com/lithammer/shortuuid/v3"
@@ -37,7 +38,7 @@ type Cmd struct {
 
 type Resp struct {
 	ClientUUID string          `json:"from"`
-	Payload    *shared.Message `json:"body"`
+	Payload    *shared.Message `json:"payload"`
 }
 
 func initIndex() *Index {
@@ -48,6 +49,13 @@ func initIndex() *Index {
 		unregister: make(chan *shared.Conn),
 		clients:    make(map[*shared.Conn]*Client),
 	}
+}
+
+func loadResp(jsonStr []byte) *Resp {
+	r := &Resp{}
+	json.Unmarshal(jsonStr, r)
+
+	return r
 }
 
 func getUUID() string {
