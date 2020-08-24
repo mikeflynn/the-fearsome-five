@@ -1,6 +1,5 @@
-repl/repl
-payload/payload
 .DS_Store
 client/client
 server/server
 admin/admin
+tff.config

