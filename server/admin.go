@@ -5,12 +5,26 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/mikeflynn/the-fearsome-five/shared"
 )
 
 func adminGetList(idx *Index, w http.ResponseWriter, r *http.Request) {
 	resp := idx.list()
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
+		http.Error(w, "Internal error", http.StatusInternalServerError)
+	}
+}
+
+func adminGetStatus(idx *Index, w http.ResponseWriter, r *http.Request) {
+	resp := map[string]interface{}{
+		"server_version": Version,
+		"client_count":   len(idx.clients),
+		"uptime":         time.Now().Sub(StartTime).String(),
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(resp); err != nil {

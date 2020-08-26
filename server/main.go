@@ -5,12 +5,15 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/mikeflynn/the-fearsome-five/shared"
 )
 
 var Verbose bool = false
+var StartTime time.Time
+var Version string = "0.1"
 
 func clientRouter(idx *Index, w http.ResponseWriter, r *http.Request) {
 	upgrader := websocket.Upgrader{
@@ -57,6 +60,9 @@ func adminRouter(idx *Index, w http.ResponseWriter, r *http.Request) {
 		case "/a/list":
 			adminGetList(idx, w, r)
 			return
+		case "/a/status":
+			adminGetStatus(idx, w, r)
+			return
 		default:
 			http.Error(w, "Not found", http.StatusNotImplemented)
 			return
@@ -101,6 +107,8 @@ func main() {
 	shared.Logger = func(message string) {
 		Logger("LIBRARY", message)
 	}
+
+	StartTime = time.Now()
 
 	index := initIndex()
 	go index.start()
