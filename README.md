@@ -1,28 +1,34 @@
 # Fearsome Five
 A Command and Control System
 
-Written in golang.
+Written in golang in three parts: server, client, and a cli admin.
 
-## Payload
+## Client
 
-* Installs and immediately makes existence known.
-* Allows connections from C&C repl with SSH key
-* Allows for remote updates
-* Allows for drop in to shell access.
-* Starts as IPFS node to allow for distributed updates.
-* Can be compiled for Windows, Linux, or macOS.
+```
+❯ ./client/client -h
+Usage of ./client/client:
+  -delay int
+      Delay, in seconds, before reconnection attempts. (default 300)
+  -reset
+      If true, it will reset use the flags and reset the config file.
+  -server string
+      Server hostname. (default "localhost:8000")
+  -unsafe
+      Turn off all discovery safe guards.
+  -verbose
+      Additional debugging logs.
+  -workdir string
+      Set the working directory (default "./")
+```
 
-## REPL
+## Server
 
-* Command and control console interface.
-* Keeps track of the announced active payloads.
-* Lists active payloads and can filter the list by OS, current activity level, or bandwidth.
-* Can connect to a single host for direct shell/powershell access.
-* Can be compiled for Linux or macOS.
-
-## TODO
-
-1. JSON query / filter
-2. Add firewall avoidance on payload.
-3. Add "hibernation" mode (with command queue) in addition to the websocket connection.
-4. Client P2P?
+```
+❯ ./server/server -h
+Usage of ./server/server:
+  -listen string
+      API listen address. (default "0.0.0.0:8000")
+  -verbose
+      Display extra logging.
+```
