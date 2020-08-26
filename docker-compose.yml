@@ -1,0 +1,15 @@
+version: "3.8"
+services:
+  server:
+    build:
+      context: ./server/.
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    command: /go/src/the-fearsome-five/server-docker -verbose
+
+  client:
+    build:
+      context: ./client/.
+      dockerfile: Dockerfile
+    command: /go/src/the-fearsome-five/client-docker -verbose -delay=10 -server=server:8000 -reset
