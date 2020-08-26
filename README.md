@@ -12,7 +12,29 @@ A Command and Control System
 
 Written in golang in three parts: server, client, and a cli admin.
 
-## Client
+# THIS IS STILL IN ACTIVE DEVELOPMENT AND NOT YET READY FOR A RELEASE. IF YOU ARE INTERESTED IN HELPING, PLEASE SUBMIT A PR OR REACH OUT TO @thatmikeflynn ON TWITTER.
+
+## Why?
+
+There are many C2s already out in the world written by hackers and others in the infosec field, but I wanted to give it a try to understand the concept better, and hopefully make something that is functional and looks cool and cyberpunk enough to feel at home on a terrible hacker movie.
+
+## Features
+
+* Separate server and admin applications to allow for better command concealment.
+* Client communication is done over websockets, which are easy to connect to through NAT and can look like standard web traffic at first glance.
+* Send commands to clients.
+* Send and retrieve files.
+* Send Powershell commands to Windows hosts.
+* The ability to easily create new admin applications that interface with the server's simple REST API interface.
+* Plugin architecture (future)
+
+## Demo
+
+-- VIDEO DEMO ONCE 1.0 IS READY --
+
+## Usage
+
+### Client
 
 ```
 ❯ ./client/client -h
@@ -31,7 +53,7 @@ Usage of ./client/client:
       Set the working directory (default "./")
 ```
 
-## Server
+### Server
 
 ```
 ❯ ./server/server -h
@@ -42,6 +64,12 @@ Usage of ./server/server:
       Display extra logging.
 ```
 
-## Admin
+### Admin
 
 Coming soon!
+
+## Development
+
+A Docker environment is included in the repo for both the  client and the server, and they can be started together via the `docker-compose.yml` file in the root.
+
+The way to start a server with three clients is with a command like this: `docker-compose up --scale client=3`
