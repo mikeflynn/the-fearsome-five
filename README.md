@@ -44,4 +44,4 @@ Usage of ./server/server:
 
 ## Admin
 
-Comming soon!
+Coming soon!
