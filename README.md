@@ -42,3 +42,6 @@ Usage of ./server/server:
       Display extra logging.
 ```
 
+## Admin
+
+Comming soon!
