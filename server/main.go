@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -94,9 +96,39 @@ func Logger(prefix string, message string) {
 	}
 }
 
+func getAbsPath(path string) string {
+	if !filepath.IsAbs(path) {
+		if wd, err := os.Getwd(); err == nil {
+			path = wd + path
+		}
+	}
+
+	return path
+}
+
+func verifySSLFiles(key string, cert string) bool {
+	if key == "" || cert == "" {
+		return false
+	}
+
+	if _, err := os.Stat(getAbsPath(key)); err != nil {
+		Logger("init", err.Error())
+		return false
+	}
+
+	if _, err := os.Stat(getAbsPath(cert)); err != nil {
+		Logger("init", err.Error())
+		return false
+	}
+
+	return true
+}
+
 func main() {
 	addr := flag.String("listen", "0.0.0.0:8000", "API listen address.")
 	verbose := flag.Bool("verbose", false, "Display extra logging.")
+	sslCert := flag.String("ssl-cert", "", "Cert file for SSL")
+	sslKey := flag.String("ssl-key", "", "Key file for SSL")
 	flag.Parse()
 
 	Verbose = *verbose
@@ -122,8 +154,17 @@ func main() {
 		clientRouter(index, w, r)
 	})
 
-	err := http.ListenAndServe(*addr, nil)
-	if err != nil {
-		log.Fatal("ListenAndServe: ", err)
+	if verifySSLFiles(*sslKey, *sslCert) {
+		Logger("INIT", "Starting secure server.")
+		err := http.ListenAndServeTLS(*addr, *sslCert, *sslKey, nil)
+		if err != nil {
+			log.Fatal("ListenAndServe: ", err)
+		}
+	} else {
+		Logger("INIT", "WARNING: Starting server insecurely!!!")
+		err := http.ListenAndServe(*addr, nil)
+		if err != nil {
+			log.Fatal("ListenAndServe: ", err)
+		}
 	}
 }
