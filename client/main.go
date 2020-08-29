@@ -128,7 +128,7 @@ func main() {
 	go func() {
 		for {
 			Debug("Checking connection...")
-			if connection.Establish(GetServer(system.Server)) {
+			if connection.Establish(GetServer(system.Server), "") {
 				go connection.WritePump()
 				go connection.ReadPump()
 

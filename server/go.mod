@@ -7,5 +7,5 @@ require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gorilla/websocket v1.4.2
 	github.com/lithammer/shortuuid/v3 v3.0.4
-	github.com/mikeflynn/the-fearsome-five/shared v0.0.0-20200822210410-ecce05b9775c
+	github.com/mikeflynn/the-fearsome-five/shared v0.0.0-20200829225137-e890016d032e
 )
