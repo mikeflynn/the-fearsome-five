@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/mikeflynn/the-fearsome-five/shared"
 )
 
@@ -20,10 +21,18 @@ func adminGetList(idx *Index, w http.ResponseWriter, r *http.Request) {
 }
 
 func adminGetStatus(idx *Index, w http.ResponseWriter, r *http.Request) {
+	whoami := "unknown"
+	tokenInterface := r.Context().Value("user")
+	if tokenInterface != nil {
+		claims := tokenInterface.(*jwt.Token).Claims.(jwt.MapClaims)
+		whoami = claims["name"].(string)
+	}
+
 	resp := map[string]interface{}{
 		"server_version": Version,
 		"client_count":   len(idx.clients),
 		"uptime":         time.Now().Sub(StartTime).String(),
+		"whoami":         whoami,
 	}
 
 	w.Header().Set("Content-Type", "application/json")

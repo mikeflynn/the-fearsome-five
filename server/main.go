@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/auth0/go-jwt-middleware"
+	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/websocket"
 	"github.com/mikeflynn/the-fearsome-five/shared"
 )
@@ -129,6 +131,7 @@ func main() {
 	verbose := flag.Bool("verbose", false, "Display extra logging.")
 	sslCert := flag.String("ssl-cert", "", "Cert file for SSL")
 	sslKey := flag.String("ssl-key", "", "Key file for SSL")
+	passCode := flag.String("password", "", "Key file for SSL")
 	flag.Parse()
 
 	Verbose = *verbose
@@ -145,10 +148,23 @@ func main() {
 	index := initIndex()
 	go index.start()
 
-	http.HandleFunc("/a/", func(w http.ResponseWriter, r *http.Request) {
+	adminHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		//Logger("ADMIN REQ", fmt.Sprintf("%s:%s", r.Method, r.URL.Path))
 		adminRouter(index, w, r)
 	})
+
+	if *passCode != "" {
+		jwtMiddleware := jwtmiddleware.New(jwtmiddleware.Options{
+			ValidationKeyGetter: func(token *jwt.Token) (interface{}, error) {
+				return []byte(*passCode), nil
+			},
+			SigningMethod: jwt.SigningMethodHS256,
+		})
+
+		http.Handle("/a/", jwtMiddleware.Handler(adminHandler))
+	} else {
+		http.Handle("/a/", adminHandler)
+	}
 
 	http.HandleFunc("/c", func(w http.ResponseWriter, r *http.Request) {
 		clientRouter(index, w, r)
