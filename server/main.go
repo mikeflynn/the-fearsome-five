@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -16,9 +15,9 @@ import (
 	"github.com/mikeflynn/the-fearsome-five/shared"
 )
 
-var Verbose bool = false
 var StartTime time.Time
 var Version string = "0.1"
+var Flags *OptionFlags
 
 func clientRouter(idx *Index, w http.ResponseWriter, r *http.Request) {
 	upgrader := websocket.Upgrader{
@@ -94,7 +93,7 @@ func adminRouter(idx *Index, w http.ResponseWriter, r *http.Request) {
 }
 
 func Logger(prefix string, message string) {
-	if Verbose {
+	if Flags.isVerbose() {
 		log.Println(fmt.Sprintf("%s > %s", prefix, message))
 	}
 }
@@ -128,16 +127,13 @@ func verifySSLFiles(key string, cert string) bool {
 }
 
 func main() {
-	addr := flag.String("listen", "0.0.0.0:8000", "API listen address.")
-	verbose := flag.Bool("verbose", false, "Display extra logging.")
-	sslCert := flag.String("ssl-cert", "", "Cert file for SSL")
-	sslKey := flag.String("ssl-key", "", "Key file for SSL")
-	passCode := flag.String("password", "", "Key file for SSL")
-	flag.Parse()
+	Flags = InitFlags()
 
-	Verbose = *verbose
+	if Flags.isVerbose() {
+		Logger("INIT", "Starting with verbose on!")
+	}
 
-	Logger("INIT", "Starting with verbose on!")
+	fmt.Println("Admin API passcode: " + Flags.getFlag("passCode"))
 
 	shared.MaxMessageSize = 1024 * 1024 * 1024
 	shared.Logger = func(message string) {
@@ -163,7 +159,7 @@ func main() {
 				return
 			}
 
-			if password != *passCode {
+			if password != Flags.getFlag("passCode") {
 				http.Error(w, "Invalid password.", http.StatusUnauthorized)
 				return
 			}
@@ -174,7 +170,7 @@ func main() {
 				"exp":      time.Now().UTC().Add(1 * time.Hour).Unix(),
 			})
 
-			tokenString, err := token.SignedString([]byte(*passCode))
+			tokenString, err := token.SignedString([]byte(Flags.jwtKey))
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
@@ -200,10 +196,10 @@ func main() {
 		adminRouter(index, w, r)
 	})
 
-	if *passCode != "" {
+	if Flags.useAuth() {
 		jwtMiddleware := jwtmiddleware.New(jwtmiddleware.Options{
 			ValidationKeyGetter: func(token *jwt.Token) (interface{}, error) {
-				return []byte(*passCode), nil
+				return []byte(Flags.jwtKey), nil
 			},
 			SigningMethod: jwt.SigningMethodHS256,
 		})
@@ -217,15 +213,15 @@ func main() {
 		clientRouter(index, w, r)
 	})
 
-	if verifySSLFiles(*sslKey, *sslCert) {
+	if verifySSLFiles(Flags.getFlag("sslKey"), Flags.getFlag("sslCert")) {
 		Logger("INIT", "Starting secure server.")
-		err := http.ListenAndServeTLS(*addr, *sslCert, *sslKey, nil)
+		err := http.ListenAndServeTLS(Flags.getFlag("addr"), Flags.getFlag("sslCert"), Flags.getFlag("sslKey"), nil)
 		if err != nil {
 			log.Fatal("ListenAndServe: ", err)
 		}
 	} else {
 		Logger("INIT", "WARNING: Starting server insecurely!!!")
-		err := http.ListenAndServe(*addr, nil)
+		err := http.ListenAndServe(Flags.getFlag("addr"), nil)
 		if err != nil {
 			log.Fatal("ListenAndServe: ", err)
 		}

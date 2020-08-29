@@ -28,12 +28,18 @@ func adminGetStatus(idx *Index, w http.ResponseWriter, r *http.Request) {
 		whoami = claims["username"].(string)
 	}
 
+	recentUsers := map[string]string{}
+	for u, t := range idx.admins {
+		recentUsers[u] = time.Now().Sub(t).String()
+	}
+
 	resp := map[string]interface{}{
 		"server_version": Version,
 		"client_count":   len(idx.clients),
 		"uptime":         time.Now().Sub(StartTime).String(),
 		"whoami":         whoami,
-		"recent_users":   idx.admins,
+		"recent_users":   recentUsers,
+		"settings":       Flags.params,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
