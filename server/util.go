@@ -2,7 +2,9 @@ package main
 
 import (
 	"flag"
+	"io/ioutil"
 	"math/rand"
+	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -116,4 +118,22 @@ func RandStringBytesMaskImprSrcSB(n int) string {
 	}
 
 	return sb.String()
+}
+
+// Network
+
+func GetExternalIP() string {
+	resp, err := http.Get("http://checkip.amazonaws.com/")
+	if err != nil {
+		return "0.0.0.0"
+	}
+
+	defer resp.Body.Close()
+
+	data, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "0.0.0.0"
+	}
+
+	return strings.TrimSpace(string(data))
 }

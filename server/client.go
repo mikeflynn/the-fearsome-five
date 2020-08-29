@@ -42,6 +42,10 @@ func clientMsgRouter(idx *Index, conn *shared.Conn, message *shared.Message) boo
 		}
 
 		return true
+	case "goodbye":
+		idx.unregister <- conn
+
+		return true
 	default:
 		return false
 	}

@@ -112,6 +112,12 @@ func main() {
 			}
 
 			connection.Send(shared.NewMessage("fileRequestResponse", output, ""))
+		case "selfTerminate":
+			system.delConfig()
+			connection.Send(shared.NewMessage("goodbye", []byte(""), shared.EncodingText))
+
+			connection.Close()
+			os.Exit(0)
 		default:
 			// Ignore
 			Debug("Unroutable message: " + string(message.Serialize()))

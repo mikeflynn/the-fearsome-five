@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"os"
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
@@ -33,10 +34,17 @@ func adminGetStatus(idx *Index, w http.ResponseWriter, r *http.Request) {
 		recentUsers[u] = time.Now().Sub(t).String()
 	}
 
+	hostname := "unknown"
+	if v, err := os.Hostname(); err == nil {
+		hostname = v
+	}
+
 	resp := map[string]interface{}{
 		"server_version": Version,
 		"client_count":   len(idx.clients),
 		"uptime":         time.Now().Sub(StartTime).String(),
+		"hostname":       hostname,
+		"external_ip":    GetExternalIP(),
 		"whoami":         whoami,
 		"recent_users":   recentUsers,
 		"settings":       Flags.params,
@@ -44,6 +52,37 @@ func adminGetStatus(idx *Index, w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(resp); err != nil {
+		http.Error(w, "Internal error", http.StatusInternalServerError)
+	}
+}
+
+func adminTerminate(idx *Index, w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "Internal error", http.StatusBadRequest)
+		return
+	}
+
+	cid := r.FormValue("cid")
+	if cid == "" {
+		http.Error(w, "Internal error", http.StatusBadRequest)
+		return
+	}
+
+	client, err := idx.clientByUUID(cid)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	cmd := &Cmd{
+		ClientUUID: client.UUID,
+		Payload:    shared.NewMessage("selfTerminate", []byte(""), shared.EncodingText),
+	}
+
+	idx.broadcast <- cmd
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(map[string]bool{"success": true}); err != nil {
 		http.Error(w, "Internal error", http.StatusInternalServerError)
 	}
 }

@@ -31,6 +31,7 @@ type System struct {
 	UUID          string `json:"uuid"`
 	OS            string `json:"os"`
 	OSVersion     string `json:"os_version"`
+	Hostname      string `json:"hostname"`
 	LanIP         string `json:"ip_internal"`
 	ExtIP         string `json:"ip_external"`
 	User          string `json:"user"`
@@ -63,6 +64,7 @@ func InitSystem(configReset bool, server string, workDir string, unsafe bool, re
 		}
 	}
 
+	sys.GetHostname()
 	sys.GetOSVersion()
 	sys.GetUser()
 	sys.GetUserGroups()
@@ -88,6 +90,14 @@ func (sys *System) saveConfig() error {
 
 	encoder := json.NewEncoder(file)
 	if err := encoder.Encode(config); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (sys *System) delConfig() error {
+	if err := os.Remove(sys.workDir + "tff.config"); err != nil {
 		return err
 	}
 
@@ -264,6 +274,18 @@ func (sys *System) GetOSVersion() (string, error) {
 	}
 
 	return sys.OSVersion, nil
+}
+
+func (sys *System) GetHostname() (string, error) {
+	if sys.Hostname == "" {
+		if val, err := os.Hostname(); err == nil {
+			sys.Hostname = val
+		} else {
+			return "", err
+		}
+	}
+
+	return sys.Hostname, nil
 }
 
 func (sys *System) RunCommand(message *shared.Message) (string, error) {
