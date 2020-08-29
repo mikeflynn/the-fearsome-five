@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"time"
 
 	"github.com/lithammer/shortuuid/v3"
 	"github.com/mikeflynn/the-fearsome-five/shared"
@@ -10,6 +11,7 @@ import (
 
 type Index struct {
 	clients    map[*shared.Conn]*Client
+	admins     map[string]time.Time
 	register   chan *shared.Conn
 	unregister chan *shared.Conn
 	broadcast  chan *Cmd
@@ -48,6 +50,7 @@ func initIndex() *Index {
 		register:   make(chan *shared.Conn),
 		unregister: make(chan *shared.Conn),
 		clients:    make(map[*shared.Conn]*Client),
+		admins:     make(map[string]time.Time),
 	}
 }
 

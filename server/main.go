@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
@@ -147,6 +148,52 @@ func main() {
 
 	index := initIndex()
 	go index.start()
+
+	http.HandleFunc("/a/login", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "POST" {
+			username := r.FormValue("username")
+			if username == "" {
+				http.Error(w, "Missing username.", http.StatusBadRequest)
+				return
+			}
+
+			password := r.FormValue("password")
+			if password == "" {
+				http.Error(w, "Missing username.", http.StatusBadRequest)
+				return
+			}
+
+			if password != *passCode {
+				http.Error(w, "Invalid password.", http.StatusUnauthorized)
+				return
+			}
+
+			// Generate and return the jwt token
+			token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+				"username": username,
+				"exp":      time.Now().UTC().Add(1 * time.Hour).Unix(),
+			})
+
+			tokenString, err := token.SignedString([]byte(*passCode))
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			resp := map[string]interface{}{
+				"token": tokenString,
+			}
+
+			index.admins[username] = time.Now()
+
+			w.Header().Set("Content-Type", "application/json")
+			if err := json.NewEncoder(w).Encode(resp); err != nil {
+				http.Error(w, "Internal error", http.StatusInternalServerError)
+			}
+		} else {
+			http.Error(w, "Not found", http.StatusMethodNotAllowed)
+		}
+	})
 
 	adminHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		//Logger("ADMIN REQ", fmt.Sprintf("%s:%s", r.Method, r.URL.Path))

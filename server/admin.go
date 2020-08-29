@@ -25,7 +25,7 @@ func adminGetStatus(idx *Index, w http.ResponseWriter, r *http.Request) {
 	tokenInterface := r.Context().Value("user")
 	if tokenInterface != nil {
 		claims := tokenInterface.(*jwt.Token).Claims.(jwt.MapClaims)
-		whoami = claims["name"].(string)
+		whoami = claims["username"].(string)
 	}
 
 	resp := map[string]interface{}{
@@ -33,6 +33,7 @@ func adminGetStatus(idx *Index, w http.ResponseWriter, r *http.Request) {
 		"client_count":   len(idx.clients),
 		"uptime":         time.Now().Sub(StartTime).String(),
 		"whoami":         whoami,
+		"recent_users":   idx.admins,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
