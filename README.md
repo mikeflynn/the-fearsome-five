@@ -8,7 +8,7 @@
   |___| |__| |__|_______| |___|   |_______|__| |__|___|  |_|_______|_______|_|   |_|_______| |_______|
 ```
 
-A Command and Control System
+A post exploitation command and control system.
 
 Written in golang in three parts: server, client, and a cli admin.
 
