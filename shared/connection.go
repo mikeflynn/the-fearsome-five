@@ -2,9 +2,12 @@ package shared
 
 import (
 	"bytes"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"strings"
 	"time"
@@ -118,11 +121,26 @@ func (c *Conn) ReadPump() {
 	}
 }
 
-func (c *Conn) Establish(host string) bool {
+func (c *Conn) Establish(host string, certPath string) bool {
 	if c.State == -1 {
 		Logger("Connecting to " + host + "...")
 
-		ws, _, err := websocket.DefaultDialer.Dial(host, nil)
+		tlsConfig := &tls.Config{InsecureSkipVerify: true}
+
+		if certPath != "" {
+			certFile, err := ioutil.ReadFile(certPath)
+			if err != nil {
+				Logger(err.Error())
+				return false
+			}
+
+			caPool := x509.NewCertPool()
+			caPool.AppendCertsFromPEM(certFile)
+			tlsConfig = &tls.Config{RootCAs: caPool}
+		}
+
+		d := websocket.Dialer{TLSClientConfig: tlsConfig}
+		ws, _, err := d.Dial(host, nil)
 		if err == nil {
 			Logger("Connection established!")
 			c.SetWS(ws)
