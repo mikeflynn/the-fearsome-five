@@ -101,7 +101,7 @@ func Logger(prefix string, message string) {
 func getAbsPath(path string) string {
 	if !filepath.IsAbs(path) {
 		if wd, err := os.Getwd(); err == nil {
-			path = wd + path
+			path = wd + "/" + path
 		}
 	}
 

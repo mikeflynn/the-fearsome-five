@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
 	"math/rand"
 	"net/url"
@@ -26,9 +25,16 @@ func Debug(message string) {
 }
 
 func GetServer(server string) string {
+	u, _ := url.Parse(server)
+
+	scheme := "ws"
+	if u.Scheme == "https" {
+		scheme = "wss"
+	}
+
 	addr := url.URL{
-		Scheme: "ws",
-		Host:   fmt.Sprintf("%s", server),
+		Scheme: scheme,
+		Host:   u.Host,
 		Path:   "/c",
 	}
 
